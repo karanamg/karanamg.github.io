@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copperleaf Provisions · Operations Portal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M6 26C6 13 15 5 27 5c0 13-8 21-21 21z' fill='%23b8692e'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="Primary">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 26C6 13 15 5 27 5c0 13-8 21-21 21z" fill="#c9773a"/><path d="M8 24C13 18 18 13 24 9" stroke="#f6ebe1" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+      <div><div class="brand-name">Copperleaf</div><div class="brand-sub">Provisions · Operations</div></div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-label">Overview</div>
+      <a href="#/dashboard" data-route="dashboard"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg>Dashboard</a>
+      <div class="nav-label">Sales</div>
+      <a href="#/orders" data-route="orders"><svg viewBox="0 0 24 24"><path d="M7 3h10l3 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7zm0 2L5.5 7h13L17 5zM8 11v2h8v-2zm0 4v2h5v-2z"/></svg>Orders &amp; Invoices</a>
+      <a href="#/insight" data-route="insight"><svg viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg>Order Insight</a>
+      <div class="nav-label">Master data</div>
+      <a href="#/products" data-route="products"><svg viewBox="0 0 24 24"><path d="M12 2l9 5v10l-9 5-9-5V7zm0 2.3L5.4 8 12 11.7 18.6 8zM5 9.7v6.1l6 3.4v-6.1zm14 0l-6 3.4v6.1l6-3.4z"/></svg>Products</a>
+      <a href="#/customers" data-route="customers"><svg viewBox="0 0 24 24"><path d="M9 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0 2c4 0 7 2 7 5v2H2v-2c0-3 3-5 7-5zm8-2a3 3 0 1 0 0-6v2a1 1 0 0 1 0 2zm1 2.2c2.4.5 4 2 4 3.8v3h-4v-2c0-1.9-.8-3.5-2.1-4.6z"/></svg>Customers</a>
+      <a href="#/suppliers" data-route="suppliers"><svg viewBox="0 0 24 24"><path d="M3 6h11v9H3zm11 3h4l3 3v3h-7zM6.5 20a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm11 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>Suppliers</a>
+      <a href="#/employees" data-route="employees"><svg viewBox="0 0 24 24"><path d="M10 4h4a2 2 0 0 1 2 2v1h4a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4V6a2 2 0 0 1 2-2zm0 3h4V6h-4z"/></svg>Employees</a>
+    </nav>
+    <div class="side-foot">
+      <div class="conn" id="conn"><span class="dot"></span><span>Checking Boomi…</span></div>
+      <div class="side-note">Live data via Boomi real-time APIs<br>Source: Northwind OData V2</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="titles">
+        <div class="crumb" id="crumb">Overview</div>
+        <h1 id="pageTitle">Dashboard</h1>
+      </div>
+      <form class="gsearch" id="gsearch" role="search" autocomplete="off">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg>
+        <input id="gq" placeholder="Search: order # 10248, product ID 11, or a customer name" aria-label="Global search">
+        <kbd>/</kbd>
+      </form>
+      <button class="activity-btn" id="activityBtn" type="button" title="Show Boomi activity">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Boomi activity <span class="count" id="actCount">0</span>
+      </button>
+      <div class="me"><div class="avatar">JR</div><div class="me-text"><b>Jordan Rivera</b><span>Sales Operations</span></div></div>
+    </header>
+    <main id="view" class="view" tabindex="-1"></main>
+  </div>
+</div>
+
+<!-- Boomi activity drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="actDrawer" aria-label="Boomi activity">
+  <div class="drawer-head"><div><h2>Boomi activity</h2><div class="muted small">Every portal request is a real-time Boomi API call</div></div><button class="icon-btn" data-close type="button" aria-label="Close">✕</button></div>
+  <div class="drawer-body">
+    <ol class="flow" id="flow">
+      <li><span class="n"></span><b>Portal (browser)</b><span>Sends the request</span></li>
+      <li><span class="n"></span><b>Portal gateway</b><span>Adds Boomi credentials server-side</span></li>
+      <li><span class="n"></span><b>Boomi API Service</b><span id="fRoute">NWPortal Order Lookup API</span></li>
+      <li><span class="n"></span><b>Boomi process</b><span id="fProc">Listener → [SUB] business logic</span></li>
+      <li><span class="n"></span><b>Northwind OData V2</b><span>services.odata.org</span></li>
+    </ol>
+    <h3 class="sec">Call log</h3>
+    <ul class="log" id="log"><li class="muted">No calls yet.</li></ul>
+  </div>
+</aside>
+
+<!-- Generic side panel (customer / supplier details) -->
+<aside class="drawer wide" id="panel" aria-label="Details"><div class="drawer-head"><div id="panelHead"></div><button class="icon-btn" data-close type="button" aria-label="Close">✕</button></div><div class="drawer-body" id="panelBody"></div></aside>
+
+<!-- Invoice modal -->
+<div class="modal" id="invoiceModal" role="dialog" aria-modal="true" aria-label="Invoice">
+  <div class="modal-card">
+    <div class="modal-tools no-print"><span class="muted small" id="invMeta"></span><div><button class="btn" id="invPrint" type="button">Print / Save PDF</button> <button class="icon-btn" data-close type="button" aria-label="Close">✕</button></div></div>
+    <div id="invoiceBody"></div>
+  </div>
+</div>
+
+<div class="tooltip" id="tip" role="tooltip"></div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
