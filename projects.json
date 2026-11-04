@@ -14,14 +14,20 @@
       "highlights": [
         "8 REST routes on one Boomi API Service, each a listener + testable subprocess",
         "Dashboard process fans out to 11 OData queries with a Branch step",
-        "Hosted copy runs from a captured Boomi snapshot; runs live locally via a credential-holding gateway"
+        "Runs live: GitHub Pages front end calls a Railway-hosted gateway that holds the Boomi credentials"
       ],
       "path": "projects/copperleaf-portal/",
       "thumbnail": "projects/copperleaf-portal/thumbnail.jpg",
       "source": "https://github.com/karanamg/karanamg.github.io/tree/main/projects/copperleaf-portal",
-      "tags": ["Boomi", "API Management", "OData", "JavaScript", "Dashboard"],
+      "tags": [
+        "Boomi",
+        "API Management",
+        "OData",
+        "JavaScript",
+        "Dashboard"
+      ],
       "date": "2026-11",
-      "status": "Demo (snapshot)"
+      "status": "Live demo"
     }
   ]
 }

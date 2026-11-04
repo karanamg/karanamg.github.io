@@ -42,7 +42,7 @@ const AUTH = env.SERVER_USERNAME && env.SERVER_TOKEN
   : null;
 const VERIFY_SSL = String(env.SERVER_VERIFY_SSL || 'true').toLowerCase() !== 'false';
 
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json', '.jpg': 'image/jpeg', '.png': 'image/png' };
 const cache = new Map(); // boomiPath -> { at, body, ms }
 
 function sendJson(res, status, body, extraHeaders = {}) {
@@ -105,7 +105,8 @@ function serveStatic(urlPath, res) {
   if (!file.startsWith(PUBLIC) || file.startsWith(PRIVATE)) { res.writeHead(403); return res.end(); }
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404, { 'Content-Type': 'text/plain' }); return res.end('Not found'); }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
+    // no-cache: browsers revalidate, so a redeploy is picked up immediately (no stale app.js/data).
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
     res.end(data);
   });
 }
@@ -179,6 +180,12 @@ http.createServer((req, res) => {
   }
 
   if (url.pathname.startsWith('/api/')) return sendJson(res, 404, { error: 'Unknown API route' });
+  // The repo path of this project (as used on GitHub Pages) maps to the root when the gateway serves it.
+  const PROJECT_PREFIX = '/projects/copperleaf-portal';
+  if (url.pathname === PROJECT_PREFIX || url.pathname.startsWith(PROJECT_PREFIX + '/')) {
+    res.writeHead(302, { Location: (url.pathname.slice(PROJECT_PREFIX.length) || '/') + url.search });
+    return res.end();
+  }
   serveStatic(url.pathname, res);
 }).listen(PORT, () => {
   console.log(`Copperleaf Operations Portal → http://localhost:${PORT}`);
