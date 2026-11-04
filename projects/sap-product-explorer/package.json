@@ -1,0 +1,10 @@
+{
+  "name": "sap-product-explorer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Meridian Industrial Product Master Explorer: front end + gateway for the Boomi SAPHub Product API (SAP API Business Hub sandbox via OData Client connector)",
+  "engines": { "node": ">=22.15" },
+  "scripts": {
+    "start": "node --use-system-ca gateway/server.js"
+  }
+}
