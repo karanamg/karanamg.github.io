@@ -109,13 +109,15 @@
   async function api(path, { fresh = false } = {}) {
     const kind = path.split(/[/?]/)[2];
     inflight++; $('#activityBtn').classList.add('busy'); setFlow(kind, 'run');
+    const BF = window.BoomiFlow, run = BF ? BF.start(kind, path) : null;   // visual Boomi execution monitor
     if (MODE === 'snapshot') {
       const t0 = performance.now();
       try {
         const body = await snapshotApi(path);
         setFlow(kind, 'done', 0, true); addLog(kind, path.replace('/api', '/v1'), 200, Math.round(performance.now() - t0), summarise(kind, body), body, false, true);
+        BF?.done(run, { snap: true, summary: summarise(kind, body) });
         return body;
-      } catch (e) { setFlow(kind, 'fail', 2); addLog(kind, path, 0, null, e.message); throw e; }
+      } catch (e) { setFlow(kind, 'fail', 2); addLog(kind, path, 0, null, e.message); BF?.fail(run, { error: e.message }); throw e; }
       finally { inflight--; if (!inflight) $('#activityBtn').classList.remove('busy'); }
     }
     // Gateway base: '' (same origin, relative so sub-paths work) or the hosted gateway URL from config.js.
@@ -123,15 +125,20 @@
     // If the live call cannot be completed, answer quietly from the captured data (when available).
     const fallback = async (why) => {
       if (!SNAP_META) return null;
-      try { const body = await snapshotApi(path); setFlow(kind, 'done', 0, true); addLog(kind, path.replace('/api', '/v1'), 200, null, `${summarise(kind, body)} · cached copy (${why})`, body, false, true); return body; }
-      catch { return null; }
+      try {
+        const body = await snapshotApi(path); setFlow(kind, 'done', 0, true);
+        addLog(kind, path.replace('/api', '/v1'), 200, null, `${summarise(kind, body)} · cached copy (${why})`, body, false, true);
+        BF?.done(run, { snap: true, summary: summarise(kind, body) }); return body;
+      } catch { return null; }
     };
     try {
       let res, body;
       try { res = await fetch(url); body = await res.json().catch(() => ({})); }
       catch (e) {
         const fb = await fallback('gateway unreachable'); if (fb) return fb;
-        setFlow(kind, 'fail', 1); addLog(kind, path, 0, null, 'Portal gateway unreachable'); throw Object.assign(new Error('The Boomi gateway is not reachable right now. Please try again shortly.'), {});
+        setFlow(kind, 'fail', 1); addLog(kind, path, 0, null, 'Portal gateway unreachable');
+        BF?.fail(run, { error: 'The Boomi gateway is not reachable right now.' });
+        throw Object.assign(new Error('The Boomi gateway is not reachable right now. Please try again shortly.'), {});
       }
       const bp = (res.headers.get('X-Boomi-Path') || path).replace('/ws/rest/nwportal', '');
       const ms = Number(res.headers.get('X-Boomi-Latency-Ms')) || null;
@@ -140,9 +147,11 @@
         if (res.status >= 500 || res.status === 429) { const fb = await fallback(`HTTP ${res.status}`); if (fb) return fb; }
         setFlow(kind, 'fail', res.status === 503 || res.status === 502 ? 1 : res.status === 404 ? 2 : 3);
         addLog(kind, bp, res.status, ms, body.error || 'Request failed');
+        BF?.fail(run, { error: `${body.error || 'Request failed'} (HTTP ${res.status})` });
         throw Object.assign(new Error(body.error || `Request failed (HTTP ${res.status})`), { detail: body.detail });
       }
       setFlow(kind, 'done'); addLog(kind, bp, res.status, ms, summarise(kind, body), body, cache);
+      BF?.done(run, { status: res.status, ms: cache ? null : ms, cache, cacheAge: res.headers.get('X-Cache-Age-S'), summary: summarise(kind, body) });
       return body;
     } finally {
       inflight--; if (!inflight) $('#activityBtn').classList.remove('busy');
