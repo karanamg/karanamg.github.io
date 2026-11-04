@@ -131,10 +131,34 @@ const LIST_ROUTES = {
   })}`
 };
 
+// --- Browser access from other sites (e.g. the GitHub Pages copy). Comma-separated origins.
+const ALLOWED_ORIGINS = new Set(String(env.ALLOWED_ORIGINS || 'https://karanamg.github.io,http://localhost:8080,http://127.0.0.1:8080')
+  .split(',').map((s) => s.trim().replace(/\/+$/, '')).filter(Boolean));
+// --- Simple per-client rate limit to protect the Boomi runtime (requests per minute; fresh=1 counts the same).
+const RATE_LIMIT = Number(env.RATE_LIMIT_PER_MIN || 90);
+const hits = new Map();
+function rateLimited(req) {
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  const now = Date.now(), win = hits.get(ip) || [];
+  const recent = win.filter((t) => now - t < 60000); recent.push(now); hits.set(ip, recent);
+  if (hits.size > 5000) for (const [k, v] of hits) if (!v.length || now - v[v.length - 1] > 60000) hits.delete(k);
+  return recent.length > RATE_LIMIT;
+}
+
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  const origin = String(req.headers.origin || '').replace(/\/+$/, '');
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Expose-Headers', 'X-Boomi-Path, X-Boomi-Status, X-Boomi-Latency-Ms, X-Cache, X-Cache-Age-S');
+  }
+  if (req.method === 'OPTIONS') { res.setHeader('Access-Control-Allow-Methods', 'GET'); res.writeHead(204); return res.end(); }
   if (req.method !== 'GET') { res.writeHead(405); return res.end(); }
   const fresh = url.searchParams.get('fresh') === '1';
+  if (url.pathname.startsWith('/api/') && url.pathname !== '/api/health' && rateLimited(req)) {
+    return sendJson(res, 429, { error: 'Too many requests - please slow down', detail: `Limit ${RATE_LIMIT} requests per minute.` });
+  }
 
   if (url.pathname === '/api/health') {
     return sendJson(res, 200, { boomiConfigured: Boolean(BOOMI_BASE && AUTH), boomiHost: BOOMI_BASE ? new URL(BOOMI_BASE).host : null, apiBase: API_BASE, cacheTtlS: CACHE_TTL_MS / 1000 });

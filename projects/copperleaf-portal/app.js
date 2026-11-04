@@ -70,6 +70,7 @@
   // ---- Data mode: 'live' when the local gateway (npm start) answers /api/health, otherwise 'snapshot'
   //      (static JSON captured from the same Boomi APIs - used on GitHub Pages where no gateway can run).
   let MODE = 'live', SNAP_META = null;
+  const API_BASE = (() => { const b = String((window.PORTAL_CONFIG || {}).apiBase || ''); return b && !b.endsWith('/') ? b + '/' : b; })();
   const snapCache = new Map();
   async function snapFile(rel) {
     if (!snapCache.has(rel)) snapCache.set(rel, fetch(`data/${rel}`).then((r) => { if (!r.ok) throw Object.assign(new Error('Not in snapshot'), { status: 404 }); return r.json(); }));
@@ -117,16 +118,26 @@
       } catch (e) { setFlow(kind, 'fail', 2); addLog(kind, path, 0, null, e.message); throw e; }
       finally { inflight--; if (!inflight) $('#activityBtn').classList.remove('busy'); }
     }
-    // Relative URL so the portal also works when hosted under a sub-path (e.g. /projects/copperleaf-portal/).
-    const url = path.replace(/^\//, '') + (fresh ? (path.includes('?') ? '&' : '?') + 'fresh=1' : '');
+    // Gateway base: '' (same origin, relative so sub-paths work) or the hosted gateway URL from config.js.
+    const url = API_BASE + path.replace(/^\//, '') + (fresh ? (path.includes('?') ? '&' : '?') + 'fresh=1' : '');
+    // If the live call cannot be completed, answer quietly from the captured data (when available).
+    const fallback = async (why) => {
+      if (!SNAP_META) return null;
+      try { const body = await snapshotApi(path); setFlow(kind, 'done', 0, true); addLog(kind, path.replace('/api', '/v1'), 200, null, `${summarise(kind, body)} · cached copy (${why})`, body, false, true); return body; }
+      catch { return null; }
+    };
     try {
       let res, body;
       try { res = await fetch(url); body = await res.json().catch(() => ({})); }
-      catch (e) { setFlow(kind, 'fail', 1); addLog(kind, path, 0, null, 'Portal gateway unreachable'); throw Object.assign(new Error('The portal gateway is not reachable. Is "npm start" running?'), {}); }
+      catch (e) {
+        const fb = await fallback('gateway unreachable'); if (fb) return fb;
+        setFlow(kind, 'fail', 1); addLog(kind, path, 0, null, 'Portal gateway unreachable'); throw Object.assign(new Error('The Boomi gateway is not reachable right now. Please try again shortly.'), {});
+      }
       const bp = (res.headers.get('X-Boomi-Path') || path).replace('/ws/rest/nwportal', '');
       const ms = Number(res.headers.get('X-Boomi-Latency-Ms')) || null;
       const cache = res.headers.get('X-Cache') === 'HIT';
       if (!res.ok) {
+        if (res.status >= 500 || res.status === 429) { const fb = await fallback(`HTTP ${res.status}`); if (fb) return fb; }
         setFlow(kind, 'fail', res.status === 503 || res.status === 502 ? 1 : res.status === 404 ? 2 : 3);
         addLog(kind, bp, res.status, ms, body.error || 'Request failed');
         throw Object.assign(new Error(body.error || `Request failed (HTTP ${res.status})`), { detail: body.detail });
@@ -595,23 +606,24 @@
   // ---------------------------------------------------------------- boot
   async function boot() {
     let h = null;
-    try { const r = await fetch('api/health', { cache: 'no-store' }); if (r.ok && (r.headers.get('content-type') || '').includes('json')) h = await r.json(); } catch { /* no gateway */ }
+    // Snapshot metadata (if bundled) enables a silent fallback when the live gateway can't be reached.
+    const snapP = snapFile('meta.json').then((m) => { SNAP_META = m; }).catch(() => {});
+    try {
+      const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 20000);
+      const r = await fetch(API_BASE + 'api/health', { cache: 'no-store', signal: ctl.signal }); clearTimeout(t);
+      if (r.ok && (r.headers.get('content-type') || '').includes('json')) h = await r.json();
+    } catch { /* gateway unreachable */ }
+    await snapP;
+    if (location.pathname.includes('/projects/')) $('.side-note').insertAdjacentHTML('beforeend', '<br><a class="back" href="../../">← All projects</a>');
     if (h && h.boomiConfigured) {
       MODE = 'live';
       $('#conn').innerHTML = '<span class="dot on"></span><span>Boomi connected · live</span>'; $('#conn').title = h.boomiHost || '';
     } else {
-      try { SNAP_META = await snapFile('meta.json'); } catch { /* no snapshot either */ }
       if (SNAP_META) {
         MODE = 'snapshot';
-        const when = new Date(SNAP_META.capturedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-        $('#conn').innerHTML = `<span class="dot snap"></span><span>Boomi snapshot · ${esc(when)}</span>`;
-        $('#conn').title = `Captured from the live Boomi API on ${SNAP_META.capturedAt}`;
-        $('.side-note').innerHTML = 'Data captured from the Boomi real-time APIs<br>Run locally with <code>npm start</code> for live calls<br><a class="back" href="../../">← All projects</a>';
-        const bar = document.createElement('div'); bar.className = 'modebar';
-        bar.innerHTML = `<span><b>Demo snapshot.</b> This hosted copy uses data captured from the live Boomi APIs on ${esc(when)} (${num(SNAP_META.boomiCalls)} Boomi API calls). Run it locally with the gateway for real-time Boomi calls.</span><button class="icon-btn" aria-label="Dismiss" type="button">✕</button>`;
-        bar.querySelector('button').addEventListener('click', () => bar.remove());
-        $('.main').insertBefore(bar, $('#view'));
-        $('#actDrawer .drawer-head .muted').textContent = 'Snapshot mode: requests are answered from captured Boomi responses';
+        $('#conn').innerHTML = '<span class="dot snap"></span><span>Boomi · cached data</span>';
+        $('#conn').title = `Live gateway unavailable - showing data captured from the Boomi APIs on ${SNAP_META.capturedAt}`;
+        $('#actDrawer .drawer-head .muted').textContent = 'Live gateway unavailable: requests are answered from captured Boomi responses';
       } else if (h) {
         $('#conn').innerHTML = '<span class="dot off"></span><span>Boomi not configured</span>';
       } else {

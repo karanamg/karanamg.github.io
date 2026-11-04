@@ -1,0 +1,11 @@
+{
+  "name": "copperleaf-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Copperleaf Provisions portal + Boomi gateway (serves the front end and proxies /api/* to the Boomi API Service with server-side credentials)",
+  "engines": { "node": ">=22.15" },
+  "scripts": {
+    "start": "node --use-system-ca gateway/server.js",
+    "capture": "node gateway/capture-snapshot.js data"
+  }
+}
