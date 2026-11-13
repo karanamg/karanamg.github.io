@@ -18,7 +18,7 @@ const STATUS = {
   ERROR: { label: 'Processing error', cls: 'b-neutral', icon: '?', color: 'var(--muted)' }
 };
 const DECISION = {
-  APPROVED_FOR_PAYMENT: { label: 'Approved for payment', text: 'The invoice agrees with the purchase order and goods receipts. Released for payment.' },
+  APPROVED_FOR_PAYMENT: { label: 'Approved · posted to Coupa', text: 'The invoice agrees with the purchase order and goods receipts, so Boomi posted it to Coupa for payment.' },
   ON_HOLD: { label: 'On hold - AP exception queue', text: 'The invoice was routed to the accounts payable exception queue for review.' },
   REJECTED: { label: 'Rejected - returned to vendor', text: 'The invoice cannot be matched to a purchase order.' },
   ERROR: { label: 'Not processed', text: 'Boomi did not return a match result.' }
@@ -116,7 +116,8 @@ const STEPS = [
   { id: 'PO_RETRIEVED', where: 'Boomi → SAP S/4HANA (ERP)', title: 'Get purchase order · API_PURCHASEORDER_PROCESS_SRV', icon: '5', boomi: true, sys: 'sap' },
   { id: 'GR_RETRIEVED', where: 'Boomi → Manhattan Active WM (WMS)', title: 'Get goods receipts from warehouse receiving', icon: '6', boomi: true, sys: 'wms' },
   { id: 'MATCH_EVALUATED', where: 'Boomi · 3-way match engine', title: 'Compare quantity, price and value', icon: '7', boomi: true },
-  { id: 'ROUTED', where: 'Boomi · Decision', title: 'Route the invoice', icon: '8', boomi: true }
+  { id: 'ROUTED', where: 'Boomi · Decision', title: 'Route the invoice', icon: '8', boomi: true },
+  { id: 'COUPA', where: 'Boomi → Coupa (AP)', title: 'Post approved invoice · POST /api/invoices', icon: '9', boomi: true, sys: 'coupa' }
 ];
 function resetPipeline() {
   $('#pipeline').innerHTML = STEPS.map((s) => `
@@ -150,12 +151,12 @@ async function processFile(blob, name) {
     if (!inv.poNumber || !inv.lines.length) throw new Error('The PDF does not contain a PO number and line items, so it cannot be matched.');
 
     setStep('api', 'running', 'Waiting for the Boomi runtime…');
-    ['INVOICE_RECEIVED', 'PO_RETRIEVED', 'GR_RETRIEVED', 'MATCH_EVALUATED', 'ROUTED'].forEach((id) => setStep(id, '', '<span class="muted">Queued</span>'));
+    ['INVOICE_RECEIVED', 'PO_RETRIEVED', 'GR_RETRIEVED', 'MATCH_EVALUATED', 'ROUTED', 'COUPA'].forEach((id) => setStep(id, '', '<span class="muted">Queued</span>'));
     const out = await api('/api/match', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invoice: inv, fileId: ex.fileId, fileName: ex.fileName }) });
     const rec = out.record;
     if (!rec.result) {
       setStep('api', 'fail', esc(rec.error || 'Boomi did not return a result'), rec.boomiMs);
-      ['INVOICE_RECEIVED', 'PO_RETRIEVED', 'GR_RETRIEVED', 'MATCH_EVALUATED', 'ROUTED'].forEach((id) => setStep(id, 'skipped', ''));
+      ['INVOICE_RECEIVED', 'PO_RETRIEVED', 'GR_RETRIEVED', 'MATCH_EVALUATED', 'ROUTED', 'COUPA'].forEach((id) => setStep(id, 'skipped', ''));
       renderResult(rec); return;
     }
     setStep('api', 'done', `HTTP 200 from ${esc(out.boomiHost)} · execution <code>${esc(shortExec(rec.result.executionId))}</code>`, rec.boomiMs);
@@ -186,6 +187,13 @@ async function replayTrace(r, animate) {
     setStep(s.step, state, esc(s.detail) + extra, s.step === 'INVOICE_RECEIVED' ? null : ms);
     if (at) prev = at;
   }
+  const c = r.coupa;
+  if (animate) { setStep('COUPA', 'running', c && c.posted ? 'Posting to Coupa…' : 'Checking route…'); await sleep(380); }
+  if (c && c.posted) {
+    const at = Date.parse(c.postedAt);
+    setStep('COUPA', 'done', `Coupa invoice <b>#${esc(c.response?.id)}</b> created for ${esc(c.request?.['invoice-number'])} · status <b>${esc(c.response?.status)}</b> · ${(c.request?.['invoice-lines'] || []).length} PO-backed lines`,
+      at && prev ? Math.max(0, at - prev) : null);
+  } else setStep('COUPA', 'skipped', esc(c?.reason || 'Not posted - the invoice did not pass the 3-way match.'));
 }
 
 /* ---------------- result ---------------- */
@@ -220,6 +228,7 @@ function renderResult(rec) {
       <div class="fact"><div class="k">Goods receipts · Manhattan Active WM</div><div class="v">${grs.length ? grs.map((g) => esc(g.grNumber)).join(', ') : 'None'}</div><div class="s">${grs.length ? grs.map((g) => esc(g.receivedDate)).join(', ') + ' · ' + esc(grs[0].warehouse) : 'Nothing received yet'}</div></div>
       <div class="fact"><div class="k">Invoice vs expected</div><div class="v">${money(sm.invoiceValue)} vs ${money(sm.expectedValue)}</div><div class="s">Variance ${signed(sm.variance)} ${esc(r.invoice.currency)} · ${sm.matched} matched, ${sm.withinTolerance} in tolerance, ${sm.exceptions} exceptions</div></div>
     </div>
+    ${coupaPanel(r.coupa)}
     ${r.reasons.length ? `<h2>Why it needs attention</h2><ul class="reasons">${r.reasons.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     <h2>Line-by-line comparison</h2>
     <div class="tablewrap"><table class="data">
@@ -244,6 +253,17 @@ function renderResult(rec) {
   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function coupaPanel(c) {
+  if (!c) return '';
+  if (!c.posted) return `<div class="coupa-box off"><span class="sys-tag coupa">Coupa</span> Not posted. ${esc(c.reason || '')}</div>`;
+  const rq = c.request || {}, rs = c.response || {};
+  return `<div class="coupa-box"><div class="coupa-head"><span class="sys-tag coupa">Coupa</span>
+      <b>Invoice #${esc(rs.id)} created</b> · ${esc(rq['invoice-number'])} · supplier ${esc(rq.supplier?.name)} (${esc(rq.supplier?.number)}) ·
+      status <b>${esc(rs.status)}</b> · ${esc(c.endpoint)}</div>
+    <details><summary>Show the Coupa request payload Boomi sent</summary><pre>${esc(JSON.stringify(rq, null, 2))}</pre>
+      <p class="subnote">Coupa response: <code>${esc(JSON.stringify(rs))}</code></p></details></div>`;
+}
+
 /* ---------------- dashboard ---------------- */
 loaders.dashboard = loadDashboard;
 $('#dashRefresh').addEventListener('click', loadDashboard);
@@ -263,6 +283,7 @@ async function loadDashboard() {
     ['Invoices processed', n, `${by((r) => r.status === 'ERROR').length} errors`],
     ['Auto-approved', approved.length, n ? `${Math.round((approved.length / n) * 100)}% touchless` : '-'],
     ['On hold', hold.length, 'In the AP exception queue'],
+    ['Posted to Coupa', by((r) => r.coupaPosted).length, 'Invoices created in Coupa'],
     ['Rejected', rejected.length, 'No matching PO'],
     ['Value approved', '$' + money(sum(approved)), `$${money(sum(hold) + sum(rejected))} held or rejected`],
     ['Average Boomi time', n ? (avgMs / 1000).toFixed(1) + ' s' : '-', 'API round trip per invoice']
@@ -273,13 +294,13 @@ async function loadDashboard() {
   const excRows = Object.entries(EXC).map(([key, label]) => ({ key, label, color: 'var(--series-1)', n: by((r) => (r.exceptionTypes || []).includes(key)).length }));
   hbars('#chartExceptions', excRows, (d) => esc(d.label), (d) => `<b>${esc(d.label)}</b>${d.n} invoice${d.n === 1 ? '' : 's'} affected`);
 
-  $('#runs').innerHTML = `<tr><th>Processed</th><th>Invoice</th><th>Vendor</th><th>PO</th><th class="n">Value</th><th>Outcome</th><th>Decision</th><th class="n">Boomi</th><th></th></tr>` +
+  $('#runs').innerHTML = `<tr><th>Processed</th><th>Invoice</th><th>Vendor</th><th>PO</th><th class="n">Value</th><th>Outcome</th><th>Decision</th><th>Coupa</th><th class="n">Boomi</th><th></th></tr>` +
     (runs.length ? runs.map((r) => `<tr class="clickable" data-id="${esc(r.id)}">
       <td>${esc(when(r.at))}</td><td><b>${esc(r.invoiceNumber || '-')}</b></td><td>${esc(r.vendorName || '-')}</td><td>${esc(r.poNumber || '-')}</td>
-      <td class="n">${money(r.value)}</td><td>${statusBadge(r.status)}</td><td>${esc((DECISION[r.decision] || DECISION.ERROR).label)}</td>
+      <td class="n">${money(r.value)}</td><td>${statusBadge(r.status)}</td><td>${esc((DECISION[r.decision] || DECISION.ERROR).label)}</td><td>${r.coupaPosted ? `<span class="sys-tag coupa">#${esc(r.coupaId)}</span>` : '<span class="muted small">not posted</span>'}</td>
       <td class="n">${r.boomiMs ? (r.boomiMs / 1000).toFixed(1) + ' s' : '-'}</td>
       <td>${r.fileId ? `<a href="${API}/api/files/${esc(r.fileId)}" target="_blank" rel="noopener">PDF</a>` : ''}</td></tr>`).join('')
-      : `<tr><td colspan="9" class="empty">No matches yet</td></tr>`);
+      : `<tr><td colspan="10" class="empty">No matches yet</td></tr>`);
   $('#runs').querySelectorAll('tr[data-id]').forEach((tr) => tr.addEventListener('click', (e) => { if (!e.target.closest('a')) openHistory(tr.dataset.id); }));
 }
 

@@ -1,6 +1,6 @@
 # Copperleaf Provisions - AP Invoice 3-Way Match
 
-Demo of an accounts-payable **3-way match** (purchase order / goods receipt / vendor invoice) built on Boomi. Purchase orders come from **SAP S/4HANA** (ERP) and goods receipts from **Manhattan Active Warehouse Management** (WMS). Both are simulated in this demo.
+Demo of an accounts-payable **3-way match** (purchase order / goods receipt / vendor invoice) built on Boomi. Purchase orders come from **SAP S/4HANA** (ERP) and goods receipts from **Manhattan Active Warehouse Management** (WMS). Approved invoices are then posted to **Coupa** (`POST /api/invoices`). SAP, Manhattan and Coupa are all simulated in this demo.
 
 - **Upload** a vendor invoice PDF (or run one of the 7 samples).
 - **Watch** each step run: PDF extraction in the gateway, then the Boomi steps replayed from the execution's real timestamps.
@@ -13,7 +13,8 @@ Demo of an accounts-payable **3-way match** (purchase order / goods receipt / ve
 |---|---|
 | `3WM Invoice Match API` (API Service, base `/ws/rest/threeway/v1`) | `POST /match`, `GET /purchaseorders`, `GET /goodsreceipts` |
 | `3WM API Match Invoice` | Listener with Try/Catch around the match subprocess |
-| `[SUB] 3WM Three-Way Match` | Captures the invoice, branches to get the PO and receipts, runs the match engine, then a Decision routes to approval or the AP exception queue |
+| `[SUB] 3WM Three-Way Match` | Captures the invoice, branches to get the PO and receipts, runs the match engine, then a Decision posts approved invoices to Coupa or routes the rest to the AP exception queue |
+| `[SUB] 3WM Coupa Post Invoice (Simulated)` + `3WM Map Match Result to Coupa Invoice` | Real Boomi map from the match result to a Coupa invoice (header, supplier, currency, PO-backed lines with `order-header-num` / `order-line-num`); the `POST https://{instance}.coupahost.com/api/invoices` call is simulated and returns a draft Coupa invoice. Check the field names against your Coupa tenant before going live |
 | `[SUB] 3WM Get Purchase Order` / `[SUB] 3WM Get Goods Receipts` | Split the dataset and keep the records for the invoice's PO (receipts are combined) |
 | `[SUB] 3WM SAP S4HANA Purchase Orders (Simulated)` / `[SUB] 3WM Manhattan WMS Goods Receipts (Simulated)` | Simulated systems of record (Message steps). For production, use the Boomi SAP S/4HANA OData connector (`API_PURCHASEORDER_PROCESS_SRV`) and a REST connection to Manhattan Active WM |
 

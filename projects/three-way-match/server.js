@@ -4,6 +4,7 @@
 //   * extracts vendor-invoice data from uploaded PDFs           POST /api/extract
 //   * sends the invoice to the Boomi 3-way match API             POST /api/match  ->  POST /ws/rest/threeway/v1/match
 //   * keeps a run history for the dashboard                      GET  /api/history
+//   * approved invoices are posted to Coupa by Boomi (simulated)  -> result.coupa
 //   * proxies the SAP S/4HANA PO / Manhattan WMS receipt data    GET  /api/purchaseorders, /api/goodsreceipts (simulated in Boomi)
 // Boomi credentials stay on the server. They are read from environment variables, ./.env, or the workspace .env:
 //   SERVER_BASE_URL, SERVER_USERNAME, SERVER_TOKEN
@@ -102,6 +103,7 @@ const summary = (h) => ({
   invoiceNumber: h.result?.invoice?.invoiceNumber || h.invoice?.invoiceNumber, poNumber: h.invoice?.poNumber,
   vendorName: h.result?.invoice?.vendorName || h.invoice?.vendor?.name, value: h.result?.summary?.invoiceValue ?? h.invoice?.subtotal,
   status: h.result?.status || 'ERROR', decision: h.result?.decision || 'ERROR', executionId: h.result?.executionId,
+  coupaPosted: Boolean(h.result?.coupa?.posted), coupaId: h.result?.coupa?.response?.id ?? null,
   // header-level outcomes (no PO / no receipt) explain every line, so they are counted on their own
   exceptionTypes: ['GR_MISSING', 'PO_NOT_FOUND'].includes(h.result?.status) ? [h.result.status]
     : [...new Set((h.result?.lines || []).map((l) => l.status).filter((s) => s !== 'MATCHED' && s !== 'WITHIN_TOLERANCE'))]
@@ -167,6 +169,8 @@ async function handle(req, res) {
     const inv = body.invoice;
     if (!inv || !inv.poNumber || !Array.isArray(inv.lines) || !inv.lines.length) return sendJson(res, 400, { error: 'The invoice needs a PO number and at least one line.' });
     const r = await boomi('POST', `${API_BASE}/match`, inv);
+    // Boomi returns { match, coupa }; keep one result object with the Coupa posting attached
+    if (r.json && r.json.match) r.json = { ...r.json.match, coupa: r.json.coupa || null };
     const rec = { id: crypto.randomUUID(), at: new Date().toISOString(), fileName: body.fileName || inv.source, fileId: body.fileId || null, invoice: inv,
                   boomiMs: r.ms, boomiStatus: r.status, result: r.status === 200 && r.json && r.json.status !== 'ERROR' ? r.json : null,
                   error: r.error || (r.json && r.json.status === 'ERROR' ? r.json.message : null) || (r.status !== 200 ? `Boomi returned HTTP ${r.status}` : null) };

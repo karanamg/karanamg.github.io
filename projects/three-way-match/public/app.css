@@ -157,3 +157,14 @@ td.chk-FAIL { background: #fbe9e9; } td.chk-TOLERANCE { background: #fff8e6; }
 .step .where.sys-sap { color: #0a4f9e; } .step .where.sys-wms { color: #0d5e52; }
 .node.sap { background: #eef4fc; border-color: #c4d8f2; } .node.wms { background: #eef8f5; border-color: #c2e1da; }
 @media (max-width: 1180px) { .systems { display: none; } .conn { margin-left: auto; } }
+
+.sys-tag.coupa { background: #eef0fb; color: #2b3a8f; border: 1px solid #c8cdef; }
+.step .where.sys-coupa { color: #2b3a8f; }
+.node.coupa { background: #f1f2fc; border-color: #cdd2f0; }
+.coupa-box { border: 1px solid #cdd2f0; background: #f6f7fd; border-radius: 8px; padding: 10px 12px; margin: 0 0 14px; }
+.coupa-box.off { background: #f6f5f1; border-color: var(--axis); color: var(--ink-2); }
+.coupa-box details { margin-top: 6px; } .coupa-box summary { cursor: pointer; font-size: 12.5px; color: #2b3a8f; }
+.coupa-box pre { background: #fff; border: 1px solid var(--ring); border-radius: 6px; padding: 8px 10px; font-size: 11.5px; max-height: 260px; overflow: auto; }
+.kpis { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+@media (max-width: 1560px) { .brand .app { display: none; } .tab { padding: 8px 9px; } .topbar { gap: 16px; } .sys-tag { margin-right: 3px; padding: 3px 6px; } }
+#runs td:nth-child(1), #runs td:nth-child(2), #runs td:nth-child(4) { white-space: nowrap; }
