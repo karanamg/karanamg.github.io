@@ -1,0 +1,16 @@
+{
+  "name": "three-way-match",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AP 3-way match demo (PO / goods receipt / vendor invoice): PDF upload, live Boomi process view and dashboard",
+  "engines": {
+    "node": ">=22.15"
+  },
+  "scripts": {
+    "start": "node --use-system-ca server.js",
+    "samples": "python3 tools/make_samples.py"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^4.10.38"
+  }
+}

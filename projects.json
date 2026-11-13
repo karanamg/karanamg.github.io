@@ -8,6 +8,28 @@
   },
   "projects": [
     {
+      "slug": "three-way-match",
+      "title": "Copperleaf Provisions - AP Invoice 3-Way Match",
+      "summary": "Upload a vendor invoice PDF and watch a Boomi process match it against the purchase order and goods receipts: quantity, unit price and line value with tolerances, then approval for payment or routing to the AP exception queue. Includes a matching dashboard and seven sample invoices.",
+      "highlights": [
+        "PDF text extraction in a Node gateway; matching runs in a Boomi API Service",
+        "Mock ERP and WMS subprocesses (split, filter, combine) ready to swap for real connectors",
+        "Live step view replayed from the Boomi execution's own timestamps"
+      ],
+      "path": "projects/three-way-match/public/",
+      "thumbnail": "projects/three-way-match/thumbnail.jpg",
+      "source": "https://github.com/karanamg/karanamg.github.io/tree/main/projects/three-way-match",
+      "tags": [
+        "Boomi",
+        "Accounts Payable",
+        "PDF",
+        "JavaScript",
+        "Dashboard"
+      ],
+      "date": "2026-11",
+      "status": "Live demo (Railway gateway)"
+    },
+    {
       "slug": "copperleaf-portal",
       "title": "Copperleaf Provisions — Operations Portal",
       "summary": "A sales and master-data portal for a fictitious fine-food wholesaler. Every screen is backed by Boomi real-time APIs that call the Northwind OData V2 service: a KPI dashboard with charts, orders with printable invoices, product order insight, customers, suppliers and employees.",

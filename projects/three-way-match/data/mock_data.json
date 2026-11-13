@@ -1,0 +1,100 @@
+{
+  "buyer": {
+    "name": "Copperleaf Provisions",
+    "address": "410 Harbor Point Drive, Portland, OR 97209",
+    "apEmail": "accounts.payable@copperleaf.example"
+  },
+  "tolerances": { "pricePct": 1.0, "valuePct": 1.0, "qtyUnits": 0 },
+  "purchaseOrders": [
+    { "poNumber": "4500012001", "vendorId": "V-1001", "vendorName": "Harbor Grain Mills", "orderDate": "2026-10-06", "currency": "USD", "buyer": "Dana Whitfield", "plant": "PDX1",
+      "lines": [
+        { "line": 10, "sku": "HGM-FLR-25", "description": "Organic Bread Flour 25 kg bag", "qty": 40, "uom": "BAG", "unitPrice": 18.50 },
+        { "line": 20, "sku": "HGM-SEM-25", "description": "Durum Semolina 25 kg bag", "qty": 20, "uom": "BAG", "unitPrice": 21.00 },
+        { "line": 30, "sku": "HGM-OAT-10", "description": "Rolled Oats 10 kg bag", "qty": 30, "uom": "BAG", "unitPrice": 12.75 } ] },
+    { "poNumber": "4500012002", "vendorId": "V-1002", "vendorName": "Northline Packaging Co.", "orderDate": "2026-10-08", "currency": "USD", "buyer": "Marcus Lee", "plant": "PDX1",
+      "lines": [
+        { "line": 10, "sku": "NLP-BOX-L", "description": "Kraft Takeaway Box Large, case of 200", "qty": 50, "uom": "CS", "unitPrice": 42.00 },
+        { "line": 20, "sku": "NLP-CUP-12", "description": "Compostable Cup 12 oz, case of 1000", "qty": 25, "uom": "CS", "unitPrice": 88.00 },
+        { "line": 30, "sku": "NLP-BAG-M", "description": "Paper Carry Bag Medium, case of 250", "qty": 40, "uom": "CS", "unitPrice": 36.50 } ] },
+    { "poNumber": "4500012003", "vendorId": "V-1003", "vendorName": "Bluewater Seafood Traders", "orderDate": "2026-10-12", "currency": "USD", "buyer": "Dana Whitfield", "plant": "PDX2",
+      "lines": [
+        { "line": 10, "sku": "BST-SAL-FL", "description": "Atlantic Salmon Fillet, skin-on", "qty": 120, "uom": "KG", "unitPrice": 16.40 },
+        { "line": 20, "sku": "BST-PRW-1620", "description": "Tiger Prawns 16/20, frozen", "qty": 60, "uom": "KG", "unitPrice": 22.90 } ] },
+    { "poNumber": "4500012004", "vendorId": "V-1004", "vendorName": "Summit Beverage Supply", "orderDate": "2026-10-14", "currency": "USD", "buyer": "Marcus Lee", "plant": "PDX1",
+      "lines": [
+        { "line": 10, "sku": "SBS-SPK-500", "description": "Sparkling Water 500 ml, case of 24", "qty": 80, "uom": "CS", "unitPrice": 14.20 },
+        { "line": 20, "sku": "SBS-CBR-250", "description": "Cold Brew Coffee 250 ml, case of 12", "qty": 40, "uom": "CS", "unitPrice": 27.60 },
+        { "line": 30, "sku": "SBS-GNB-330", "description": "Ginger Beer 330 ml, case of 24", "qty": 60, "uom": "CS", "unitPrice": 19.80 } ] },
+    { "poNumber": "4500012005", "vendorId": "V-1005", "vendorName": "Redwood Kitchen Equipment", "orderDate": "2026-10-20", "currency": "USD", "buyer": "Priya Raman", "plant": "PDX2",
+      "lines": [
+        { "line": 10, "sku": "RKE-CMB-10", "description": "Combi Oven, 10-tray, electric", "qty": 1, "uom": "EA", "unitPrice": 14950.00 },
+        { "line": 20, "sku": "RKE-SVC-INST", "description": "Installation and commissioning", "qty": 1, "uom": "EA", "unitPrice": 850.00 } ] },
+    { "poNumber": "4500012006", "vendorId": "V-1006", "vendorName": "Meadowbrook Dairy Cooperative", "orderDate": "2026-10-22", "currency": "USD", "buyer": "Priya Raman", "plant": "PDX1",
+      "lines": [
+        { "line": 10, "sku": "MDC-MLK-10", "description": "Whole Milk 10 L bag-in-box", "qty": 200, "uom": "EA", "unitPrice": 9.60 },
+        { "line": 20, "sku": "MDC-BTR-5", "description": "Unsalted Butter 5 kg block", "qty": 40, "uom": "EA", "unitPrice": 31.50 },
+        { "line": 30, "sku": "MDC-YOG-5", "description": "Greek Yogurt 5 kg tub", "qty": 30, "uom": "EA", "unitPrice": 18.20 } ] }
+  ],
+  "goodsReceipts": [
+    { "grNumber": "5000081001", "poNumber": "4500012001", "receivedDate": "2026-10-13", "warehouse": "PDX1 Dry Store", "receivedBy": "J. Ortega",
+      "lines": [ { "poLine": 10, "sku": "HGM-FLR-25", "qtyReceived": 40 }, { "poLine": 20, "sku": "HGM-SEM-25", "qtyReceived": 20 }, { "poLine": 30, "sku": "HGM-OAT-10", "qtyReceived": 30 } ] },
+    { "grNumber": "5000081002", "poNumber": "4500012002", "receivedDate": "2026-10-15", "warehouse": "PDX1 Dry Store", "receivedBy": "J. Ortega",
+      "lines": [ { "poLine": 10, "sku": "NLP-BOX-L", "qtyReceived": 50 }, { "poLine": 20, "sku": "NLP-CUP-12", "qtyReceived": 25 }, { "poLine": 30, "sku": "NLP-BAG-M", "qtyReceived": 40 } ] },
+    { "grNumber": "5000081003", "poNumber": "4500012003", "receivedDate": "2026-10-16", "warehouse": "PDX2 Cold Room", "receivedBy": "S. Novak",
+      "lines": [ { "poLine": 10, "sku": "BST-SAL-FL", "qtyReceived": 120 }, { "poLine": 20, "sku": "BST-PRW-1620", "qtyReceived": 48 } ] },
+    { "grNumber": "5000081004", "poNumber": "4500012004", "receivedDate": "2026-10-19", "warehouse": "PDX1 Beverage Bay", "receivedBy": "K. Adeyemi",
+      "lines": [ { "poLine": 10, "sku": "SBS-SPK-500", "qtyReceived": 50 }, { "poLine": 20, "sku": "SBS-CBR-250", "qtyReceived": 40 }, { "poLine": 30, "sku": "SBS-GNB-330", "qtyReceived": 30 } ] },
+    { "grNumber": "5000081005", "poNumber": "4500012004", "receivedDate": "2026-10-23", "warehouse": "PDX1 Beverage Bay", "receivedBy": "K. Adeyemi",
+      "lines": [ { "poLine": 10, "sku": "SBS-SPK-500", "qtyReceived": 30 }, { "poLine": 30, "sku": "SBS-GNB-330", "qtyReceived": 30 } ] },
+    { "grNumber": "5000081006", "poNumber": "4500012006", "receivedDate": "2026-10-27", "warehouse": "PDX1 Cold Room", "receivedBy": "S. Novak",
+      "lines": [ { "poLine": 10, "sku": "MDC-MLK-10", "qtyReceived": 200 }, { "poLine": 20, "sku": "MDC-BTR-5", "qtyReceived": 40 }, { "poLine": 30, "sku": "MDC-YOG-5", "qtyReceived": 30 } ] }
+  ],
+  "sampleInvoices": [
+    { "file": "01_Harbor_Grain_Mills_INV-HGM-24017_MATCH.pdf", "scenario": "Perfect match - approved for payment",
+      "invoiceNumber": "INV-HGM-24017", "invoiceDate": "2026-10-14", "dueDate": "2026-11-13", "poNumber": "4500012001",
+      "vendor": { "id": "V-1001", "name": "Harbor Grain Mills", "address": "88 Millrace Road, Salem, OR 97301", "taxId": "93-4417820", "email": "billing@harborgrain.example" },
+      "taxRate": 0, "lines": [
+        { "line": 10, "sku": "HGM-FLR-25", "description": "Organic Bread Flour 25 kg bag", "qty": 40, "uom": "BAG", "unitPrice": 18.50 },
+        { "line": 20, "sku": "HGM-SEM-25", "description": "Durum Semolina 25 kg bag", "qty": 20, "uom": "BAG", "unitPrice": 21.00 },
+        { "line": 30, "sku": "HGM-OAT-10", "description": "Rolled Oats 10 kg bag", "qty": 30, "uom": "BAG", "unitPrice": 12.75 } ] },
+    { "file": "02_Northline_Packaging_INV-NLP-77310_PRICE_VARIANCE.pdf", "scenario": "Unit price above PO on one line - exception",
+      "invoiceNumber": "INV-NLP-77310", "invoiceDate": "2026-10-16", "dueDate": "2026-11-15", "poNumber": "4500012002",
+      "vendor": { "id": "V-1002", "name": "Northline Packaging Co.", "address": "1200 Industrial Way, Tacoma, WA 98421", "taxId": "91-2280419", "email": "ar@northlinepack.example" },
+      "taxRate": 0, "lines": [
+        { "line": 10, "sku": "NLP-BOX-L", "description": "Kraft Takeaway Box Large, case of 200", "qty": 50, "uom": "CS", "unitPrice": 42.00 },
+        { "line": 20, "sku": "NLP-CUP-12", "description": "Compostable Cup 12 oz, case of 1000", "qty": 25, "uom": "CS", "unitPrice": 94.00 },
+        { "line": 30, "sku": "NLP-BAG-M", "description": "Paper Carry Bag Medium, case of 250", "qty": 40, "uom": "CS", "unitPrice": 36.50 } ] },
+    { "file": "03_Bluewater_Seafood_INV-BST-5521_QTY_VARIANCE.pdf", "scenario": "Billed for more than was received - exception",
+      "invoiceNumber": "INV-BST-5521", "invoiceDate": "2026-10-17", "dueDate": "2026-11-16", "poNumber": "4500012003",
+      "vendor": { "id": "V-1003", "name": "Bluewater Seafood Traders", "address": "Pier 14, Astoria, OR 97103", "taxId": "93-6650127", "email": "invoices@bluewaterseafood.example" },
+      "taxRate": 0, "lines": [
+        { "line": 10, "sku": "BST-SAL-FL", "description": "Atlantic Salmon Fillet, skin-on", "qty": 120, "uom": "KG", "unitPrice": 16.40 },
+        { "line": 20, "sku": "BST-PRW-1620", "description": "Tiger Prawns 16/20, frozen", "qty": 60, "uom": "KG", "unitPrice": 22.90 } ] },
+    { "file": "04_Summit_Beverage_INV-SBS-90442_WITHIN_TOLERANCE.pdf", "scenario": "Two partial receipts and a small price difference inside tolerance - approved",
+      "invoiceNumber": "INV-SBS-90442", "invoiceDate": "2026-10-24", "dueDate": "2026-11-23", "poNumber": "4500012004",
+      "vendor": { "id": "V-1004", "name": "Summit Beverage Supply", "address": "455 Cascade Avenue, Bend, OR 97701", "taxId": "93-1182904", "email": "billing@summitbev.example" },
+      "taxRate": 0, "lines": [
+        { "line": 10, "sku": "SBS-SPK-500", "description": "Sparkling Water 500 ml, case of 24", "qty": 80, "uom": "CS", "unitPrice": 14.28 },
+        { "line": 20, "sku": "SBS-CBR-250", "description": "Cold Brew Coffee 250 ml, case of 12", "qty": 40, "uom": "CS", "unitPrice": 27.60 },
+        { "line": 30, "sku": "SBS-GNB-330", "description": "Ginger Beer 330 ml, case of 24", "qty": 60, "uom": "CS", "unitPrice": 19.80 } ] },
+    { "file": "05_Redwood_Kitchen_INV-RKE-3307_NO_GOODS_RECEIPT.pdf", "scenario": "Goods not yet received - on hold",
+      "invoiceNumber": "INV-RKE-3307", "invoiceDate": "2026-10-28", "dueDate": "2026-11-27", "poNumber": "4500012005",
+      "vendor": { "id": "V-1005", "name": "Redwood Kitchen Equipment", "address": "72 Foundry Street, Eugene, OR 97402", "taxId": "93-7741556", "email": "accounts@redwoodkitchen.example" },
+      "taxRate": 0, "lines": [
+        { "line": 10, "sku": "RKE-CMB-10", "description": "Combi Oven, 10-tray, electric", "qty": 1, "uom": "EA", "unitPrice": 14950.00 },
+        { "line": 20, "sku": "RKE-SVC-INST", "description": "Installation and commissioning", "qty": 1, "uom": "EA", "unitPrice": 850.00 } ] },
+    { "file": "06_Meadowbrook_Dairy_INV-MDC-61809_LINE_NOT_ON_PO.pdf", "scenario": "Extra surcharge line that is not on the PO - exception",
+      "invoiceNumber": "INV-MDC-61809", "invoiceDate": "2026-10-28", "dueDate": "2026-11-27", "poNumber": "4500012006",
+      "vendor": { "id": "V-1006", "name": "Meadowbrook Dairy Cooperative", "address": "3100 Pasture Lane, Tillamook, OR 97141", "taxId": "93-0098341", "email": "ar@meadowbrookdairy.example" },
+      "taxRate": 0, "lines": [
+        { "line": 10, "sku": "MDC-MLK-10", "description": "Whole Milk 10 L bag-in-box", "qty": 200, "uom": "EA", "unitPrice": 9.60 },
+        { "line": 20, "sku": "MDC-BTR-5", "description": "Unsalted Butter 5 kg block", "qty": 40, "uom": "EA", "unitPrice": 31.50 },
+        { "line": 30, "sku": "MDC-YOG-5", "description": "Greek Yogurt 5 kg tub", "qty": 30, "uom": "EA", "unitPrice": 18.20 },
+        { "line": 40, "sku": "MDC-SURCH", "description": "Cold chain delivery surcharge", "qty": 1, "uom": "EA", "unitPrice": 75.00 } ] },
+    { "file": "07_Harbor_Grain_Mills_INV-HGM-24102_UNKNOWN_PO.pdf", "scenario": "PO number does not exist - rejected",
+      "invoiceNumber": "INV-HGM-24102", "invoiceDate": "2026-10-30", "dueDate": "2026-11-29", "poNumber": "4500019999",
+      "vendor": { "id": "V-1001", "name": "Harbor Grain Mills", "address": "88 Millrace Road, Salem, OR 97301", "taxId": "93-4417820", "email": "billing@harborgrain.example" },
+      "taxRate": 0, "lines": [
+        { "line": 10, "sku": "HGM-FLR-25", "description": "Organic Bread Flour 25 kg bag", "qty": 25, "uom": "BAG", "unitPrice": 18.50 } ] }
+  ]
+}

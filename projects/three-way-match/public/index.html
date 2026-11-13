@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Copperleaf Provisions · AP Invoice 3-Way Match</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="mark" aria-hidden="true">CP</div>
+    <div><div class="co">Copperleaf Provisions</div><div class="app">Accounts Payable · Invoice 3-Way Match</div></div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="process" role="tab">Process invoice</button>
+    <button class="tab" data-tab="dashboard" role="tab">Dashboard</button>
+    <button class="tab" data-tab="reference" role="tab">POs &amp; receipts</button>
+    <button class="tab" data-tab="how" role="tab">How it works</button>
+  </nav>
+  <div id="conn" class="conn" title="Boomi connection">Checking Boomi…</div>
+</header>
+
+<main>
+  <!-- ================= PROCESS ================= -->
+  <section id="tab-process" class="tabpane active">
+    <div class="grid2">
+      <div class="col">
+        <div class="card">
+          <h2>Upload a vendor invoice</h2>
+          <label id="drop" class="drop" tabindex="0">
+            <input id="file" type="file" accept="application/pdf,.pdf" hidden>
+            <div class="drop-ico" aria-hidden="true">⬆</div>
+            <div><b>Drop a PDF invoice here</b> or <u>choose a file</u></div>
+            <div class="muted small">Text-based PDF, up to 8 MB. The invoice must quote a PO number.</div>
+          </label>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Sample invoices</h2><button id="runAll" class="btn">Run all 7 samples</button></div>
+          <p class="muted small">Each sample tests a different outcome. Download one to upload it yourself, or run it directly.</p>
+          <ul id="samples" class="samples"></ul>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card">
+          <div class="card-head"><h2>Live process</h2><span id="runLabel" class="muted small">Waiting for an invoice</span></div>
+          <ol id="pipeline" class="pipeline"></ol>
+        </div>
+      </div>
+    </div>
+
+    <div id="result" class="card result hidden"></div>
+  </section>
+
+  <!-- ================= DASHBOARD ================= -->
+  <section id="tab-dashboard" class="tabpane">
+    <div class="card-head page-head">
+      <div><h1>Matching dashboard</h1><p class="muted small" id="dashNote"></p></div>
+      <div class="actions"><button id="dashRefresh" class="btn ghost">Refresh</button><button id="dashReset" class="btn ghost danger">Clear history</button></div>
+    </div>
+    <div id="kpis" class="kpis"></div>
+    <div class="grid2">
+      <div class="card"><h2>Outcome by status</h2><div id="chartStatus" class="chart"></div></div>
+      <div class="card"><h2>Exceptions by type</h2><div id="chartExceptions" class="chart"></div></div>
+    </div>
+    <div class="card">
+      <h2>Recent matches</h2>
+      <div class="tablewrap"><table class="data" id="runs"></table></div>
+    </div>
+  </section>
+
+  <!-- ================= REFERENCE ================= -->
+  <section id="tab-reference" class="tabpane">
+    <div class="card-head page-head">
+      <div><h1>Purchase orders &amp; goods receipts</h1><p class="muted small">Mock ERP and warehouse data, read live from the Boomi API (<code>GET /ws/rest/threeway/v1/purchaseorders</code> and <code>/goodsreceipts</code>).</p></div>
+      <button id="refReload" class="btn ghost">Reload from Boomi</button>
+    </div>
+    <div id="refBody"></div>
+  </section>
+
+  <!-- ================= HOW ================= -->
+  <section id="tab-how" class="tabpane">
+    <div class="card">
+      <h1>How the 3-way match works</h1>
+      <p>A vendor invoice is only paid when it agrees with what was <b>ordered</b> (purchase order) and what was actually <b>received</b> (goods receipt). For every invoice line the Boomi process checks:</p>
+      <table class="data compact" id="rules"></table>
+      <h2 class="mt">Flow</h2>
+      <div class="arch">
+        <div class="node web"><b>Browser</b><span>Upload PDF, watch the run, dashboard</span></div><div class="arrow">→</div>
+        <div class="node gw"><b>Node gateway</b><span>Reads the PDF text (pdf.js) and builds the invoice JSON. Holds the Boomi credentials.</span></div><div class="arrow">→</div>
+        <div class="node boomi"><b>Boomi API Service</b><span>3WM Invoice Match API<br><code>POST /ws/rest/threeway/v1/match</code></span></div>
+      </div>
+      <div class="arch sub">
+        <div class="node boomi"><b>[SUB] 3WM Get Purchase Order</b><span>Mock ERP purchase orders → split → keep the PO named on the invoice</span></div>
+        <div class="node boomi"><b>[SUB] 3WM Get Goods Receipts</b><span>Mock WMS receipts → split → keep receipts for the PO → combine</span></div>
+        <div class="node boomi"><b>3-way match engine</b><span>Compares quantity, unit price and line value with tolerances</span></div>
+        <div class="node boomi"><b>Decision</b><span>Approve for payment, or route to the AP exception queue</span></div>
+      </div>
+      <p class="muted small mt">Boomi folder <b>Companion/ThreeWayMatch</b>. The two mock subprocesses are the swap-out points for real ERP (for example SAP or Oracle) and warehouse connectors.</p>
+    </div>
+  </section>
+</main>
+
+<div id="tip" class="tip" role="tooltip" hidden></div>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
