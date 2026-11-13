@@ -18,6 +18,7 @@
     <button class="tab" data-tab="reference" role="tab">POs &amp; receipts</button>
     <button class="tab" data-tab="how" role="tab">How it works</button>
   </nav>
+  <div class="systems" title="ERP and WMS data are simulated for this demo"><span class="sys-tag sap">ERP · SAP S/4HANA</span><span class="sys-tag wms">WMS · Manhattan Active WM</span><span class="sim">simulated</span></div>
   <div id="conn" class="conn" title="Boomi connection">Checking Boomi…</div>
 </header>
 
@@ -73,8 +74,8 @@
   <!-- ================= REFERENCE ================= -->
   <section id="tab-reference" class="tabpane">
     <div class="card-head page-head">
-      <div><h1>Purchase orders &amp; goods receipts</h1><p class="muted small">Mock ERP and warehouse data, read live from the Boomi API (<code>GET /ws/rest/threeway/v1/purchaseorders</code> and <code>/goodsreceipts</code>).</p></div>
-      <button id="refReload" class="btn ghost">Reload from Boomi</button>
+      <div><h1>Purchase orders &amp; goods receipts</h1><p class="muted small">Purchase orders from <b>SAP S/4HANA</b> and goods receipts from <b>Manhattan Active WM</b>, read through the Boomi API (<code>GET /ws/rest/threeway/v1/purchaseorders</code> and <code>/goodsreceipts</code>). The source data is simulated for this demo.</p></div>
+      <button id="refReload" class="btn ghost">Reload through Boomi</button>
     </div>
     <div id="refBody"></div>
   </section>
@@ -92,12 +93,18 @@
         <div class="node boomi"><b>Boomi API Service</b><span>3WM Invoice Match API<br><code>POST /ws/rest/threeway/v1/match</code></span></div>
       </div>
       <div class="arch sub">
-        <div class="node boomi"><b>[SUB] 3WM Get Purchase Order</b><span>Mock ERP purchase orders → split → keep the PO named on the invoice</span></div>
-        <div class="node boomi"><b>[SUB] 3WM Get Goods Receipts</b><span>Mock WMS receipts → split → keep receipts for the PO → combine</span></div>
+        <div class="node boomi"><b>[SUB] 3WM Get Purchase Order</b><span>SAP S/4HANA purchase orders → split → keep the PO named on the invoice</span></div>
+        <div class="node boomi"><b>[SUB] 3WM Get Goods Receipts</b><span>Manhattan Active WM receipts → split → keep receipts for the PO → combine</span></div>
         <div class="node boomi"><b>3-way match engine</b><span>Compares quantity, unit price and line value with tolerances</span></div>
         <div class="node boomi"><b>Decision</b><span>Approve for payment, or route to the AP exception queue</span></div>
       </div>
-      <p class="muted small mt">Boomi folder <b>Companion/ThreeWayMatch</b>. The two mock subprocesses are the swap-out points for real ERP (for example SAP or Oracle) and warehouse connectors.</p>
+      <h2 class="mt">Systems of record</h2>
+      <div class="arch">
+        <div class="node sap"><b>SAP S/4HANA · ERP</b><span>Purchase orders (header, lines, prices) via the standard OData API <code>API_PURCHASEORDER_PROCESS_SRV</code>.<br>Boomi: SAP S/4HANA OData connector.</span></div>
+        <div class="node wms"><b>Manhattan Active WM · WMS</b><span>Warehouse receipts against each PO line, including partial deliveries.<br>Boomi: REST connector to the Manhattan Active WM APIs.</span></div>
+        <div class="node gw"><b>AP outcome</b><span>Approved invoices are released for payment in SAP; exceptions go to the AP exception queue.</span></div>
+      </div>
+      <p class="muted small mt">In this demo the SAP and Manhattan data are <b>simulated</b> by two Boomi subprocesses, <b>[SUB] 3WM SAP S4HANA Purchase Orders (Simulated)</b> and <b>[SUB] 3WM Manhattan WMS Goods Receipts (Simulated)</b>, which hold the sample records in Message steps. Replace each Message step with the real connector call and the rest of the process stays the same. Boomi folder <b>Companion/ThreeWayMatch</b>.</p>
     </div>
   </section>
 </main>

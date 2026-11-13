@@ -56,7 +56,8 @@ async function init() {
     const h = await api('/api/health');
     const c = $('#conn');
     c.className = 'conn ' + (h.boomiConfigured ? 'ok' : 'bad');
-    c.textContent = h.boomiConfigured ? `Boomi · ${h.boomiHost}` : 'Boomi not configured';
+    c.textContent = h.boomiConfigured ? 'Boomi connected' : 'Boomi not configured';
+    if (h.boomiHost) c.title = `Boomi runtime: ${h.boomiHost}`;
   } catch {
     $('#conn').className = 'conn bad';
     $('#conn').textContent = window.THREEWAY_STATIC_ONLY ? 'Live gateway not configured' : 'Gateway offline';
@@ -112,15 +113,15 @@ const STEPS = [
   { id: 'extract', where: 'Gateway · pdf.js', title: 'Read invoice data from the PDF', icon: '2' },
   { id: 'api', where: 'Boomi API Service', title: 'POST /ws/rest/threeway/v1/match', icon: '3', boomi: true },
   { id: 'INVOICE_RECEIVED', where: 'Boomi · [SUB] 3WM Three-Way Match', title: 'Capture invoice and PO number', icon: '4', boomi: true },
-  { id: 'PO_RETRIEVED', where: 'Boomi · Mock ERP', title: 'Get purchase order', icon: '5', boomi: true },
-  { id: 'GR_RETRIEVED', where: 'Boomi · Mock WMS', title: 'Get goods receipts', icon: '6', boomi: true },
+  { id: 'PO_RETRIEVED', where: 'Boomi → SAP S/4HANA (ERP)', title: 'Get purchase order · API_PURCHASEORDER_PROCESS_SRV', icon: '5', boomi: true, sys: 'sap' },
+  { id: 'GR_RETRIEVED', where: 'Boomi → Manhattan Active WM (WMS)', title: 'Get goods receipts from warehouse receiving', icon: '6', boomi: true, sys: 'wms' },
   { id: 'MATCH_EVALUATED', where: 'Boomi · 3-way match engine', title: 'Compare quantity, price and value', icon: '7', boomi: true },
   { id: 'ROUTED', where: 'Boomi · Decision', title: 'Route the invoice', icon: '8', boomi: true }
 ];
 function resetPipeline() {
   $('#pipeline').innerHTML = STEPS.map((s) => `
     <li class="step" id="st-${s.id}"><div class="dot">${s.icon}</div>
-      <div><div class="where ${s.boomi ? 'boomi' : ''}">${esc(s.where)}</div><div class="title">${esc(s.title)}</div><div class="detail"></div></div>
+      <div><div class="where ${s.boomi ? 'boomi' : ''} ${s.sys ? 'sys-' + s.sys : ''}">${esc(s.where)}</div><div class="title">${esc(s.title)}</div><div class="detail"></div></div>
       <div class="ms"></div></li>`).join('');
 }
 function setStep(id, state, detail, ms) {
@@ -215,8 +216,8 @@ function renderResult(rec) {
     </div>
     <div class="facts">
       <div class="fact"><div class="k">Vendor invoice</div><div class="v">${esc(r.invoice.invoiceNumber)}</div><div class="s">${esc(r.invoice.vendorName)} · ${esc(r.invoice.invoiceDate)}</div></div>
-      <div class="fact"><div class="k">Purchase order</div><div class="v">${esc(r.invoice.poNumber)}</div><div class="s">${po ? `${esc(po.vendorName)} · ${esc(po.orderDate)} · buyer ${esc(po.buyer)}` : 'Not found in the ERP'}</div></div>
-      <div class="fact"><div class="k">Goods receipts</div><div class="v">${grs.length ? grs.map((g) => esc(g.grNumber)).join(', ') : 'None'}</div><div class="s">${grs.length ? grs.map((g) => esc(g.receivedDate)).join(', ') + ' · ' + esc(grs[0].warehouse) : 'Nothing received yet'}</div></div>
+      <div class="fact"><div class="k">Purchase order · SAP S/4HANA</div><div class="v">${esc(r.invoice.poNumber)}</div><div class="s">${po ? `${esc(po.vendorName)} · ${esc(po.orderDate)} · buyer ${esc(po.buyer)}` : 'Not found in SAP S/4HANA'}</div></div>
+      <div class="fact"><div class="k">Goods receipts · Manhattan Active WM</div><div class="v">${grs.length ? grs.map((g) => esc(g.grNumber)).join(', ') : 'None'}</div><div class="s">${grs.length ? grs.map((g) => esc(g.receivedDate)).join(', ') + ' · ' + esc(grs[0].warehouse) : 'Nothing received yet'}</div></div>
       <div class="fact"><div class="k">Invoice vs expected</div><div class="v">${money(sm.invoiceValue)} vs ${money(sm.expectedValue)}</div><div class="s">Variance ${signed(sm.variance)} ${esc(r.invoice.currency)} · ${sm.matched} matched, ${sm.withinTolerance} in tolerance, ${sm.exceptions} exceptions</div></div>
     </div>
     ${r.reasons.length ? `<h2>Why it needs attention</h2><ul class="reasons">${r.reasons.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
@@ -324,9 +325,9 @@ async function loadReference() {
       const total = po.lines.reduce((s, l) => s + l.qty * l.unitPrice, 0);
       const full = po.lines.every((l) => rec(l.line) >= l.qty), none = po.lines.every((l) => rec(l.line) === 0);
       const st = none ? { label: 'Not received', cls: 'b-warning', icon: '⏸' } : full ? { label: 'Fully received', cls: 'b-good', icon: '✔' } : { label: 'Partially received', cls: 'b-serious', icon: '!' };
-      return `<div class="po"><div class="po-head"><b>PO ${esc(po.poNumber)}</b><span>${esc(po.vendorName)} (${esc(po.vendorId)})</span>
+      return `<div class="po"><div class="po-head"><span class="sys-tag sap">SAP S/4HANA</span><b>PO ${esc(po.poNumber)}</b><span>${esc(po.vendorName)} (${esc(po.vendorId)})</span>
           <span class="muted small">Ordered ${esc(po.orderDate)} · buyer ${esc(po.buyer)} · plant ${esc(po.plant)}</span>${badge(st)}
-          <span class="muted small">Receipts: ${mine.length ? mine.map((x) => `${esc(x.grNumber)} (${esc(x.receivedDate)})`).join(', ') : 'none'}</span></div>
+          <span class="muted small"><span class="sys-tag wms">Manhattan Active WM</span> receipts: ${mine.length ? mine.map((x) => `${esc(x.grNumber)} (${esc(x.receivedDate)})`).join(', ') : 'none'}</span></div>
         <table class="data compact"><tr><th>Line</th><th>Item</th><th>Description</th><th class="n">Ordered</th><th>UoM</th><th class="n">Unit price</th><th class="n">Value</th><th class="n">Received</th></tr>
         ${po.lines.map((l) => `<tr><td>${esc(l.line)}</td><td class="sku">${esc(l.sku)}</td><td>${esc(l.description)}</td><td class="n">${qty(l.qty)}</td><td>${esc(l.uom)}</td><td class="n">${money(l.unitPrice)}</td><td class="n">${money(l.qty * l.unitPrice)}</td><td class="n">${qty(rec(l.line))}</td></tr>`).join('')}
         <tr><td colspan="6"></td><td class="n"><b>${money(total)}</b></td><td></td></tr></table></div>`;

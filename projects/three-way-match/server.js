@@ -4,7 +4,7 @@
 //   * extracts vendor-invoice data from uploaded PDFs           POST /api/extract
 //   * sends the invoice to the Boomi 3-way match API             POST /api/match  ->  POST /ws/rest/threeway/v1/match
 //   * keeps a run history for the dashboard                      GET  /api/history
-//   * proxies the mock ERP / WMS reference data from Boomi       GET  /api/purchaseorders, /api/goodsreceipts
+//   * proxies the SAP S/4HANA PO / Manhattan WMS receipt data    GET  /api/purchaseorders, /api/goodsreceipts (simulated in Boomi)
 // Boomi credentials stay on the server. They are read from environment variables, ./.env, or the workspace .env:
 //   SERVER_BASE_URL, SERVER_USERNAME, SERVER_TOKEN
 // Run:  npm install && npm start   ->  http://localhost:8090
