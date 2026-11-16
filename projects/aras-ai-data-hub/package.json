@@ -1,0 +1,8 @@
+{
+  "name": "aras-ai-data-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Integrasi Connect - embedded, multi-tenant AI data hub demo for Aras Integrasi, powered by Boomi",
+  "engines": { "node": ">=22.15" },
+  "scripts": { "start": "node --use-system-ca server.js", "data": "python3 tools/make_data.py" }
+}

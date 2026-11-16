@@ -1,0 +1,7 @@
+work_order,asset_id,sap_product,asset_name,plant,technician,date,failure_mode,downtime_hours,action_taken,notes
+WO-77120,AST-PG-0412,200001066,Chiller Pump CP-4,Penang,Ravi Shankar,2026-07-14,Bearing overheating,6,Replaced bearing and checked lubrication,Third bearing issue this year on CP-4. Recommend vibration monitoring.
+WO-77188,AST-SA-0207,200001066,Chiller Pump CP-2,Shah Alam,Lee Kok Wai,2026-07-29,Impeller crack,14,Replaced impeller,Cavitation marks on impeller. Check suction pressure.
+WO-77245,AST-JB-0118,200001014,Jet Pump JP-1,Johor Bahru,Siti Aminah,2026-08-05,High vibration,3,Realigned motor coupling,Vibration back within limits after alignment.
+WO-77302,AST-KL-0331,200001023,Control System Pump CS-3,Kuala Lumpur,Ravi Shankar,2026-08-19,Seal leakage,5,Replaced mechanical seal,Seal batch 2026-04 may be defective; quarantine remaining stock.
+WO-77360,AST-KT-0090,200001073,Fuel Pump FP-9,Kuantan,Mohd Rizal,2026-09-02,Low discharge pressure,2,Cleaned strainer,Contaminated fuel suspected. Advise customer on filtration.
+WO-77411,AST-SA-0207,200001066,Chiller Pump CP-2,Shah Alam,Lee Kok Wai,2026-09-23,Impeller crack,16,Replaced impeller and installed suction gauge,Repeat failure. Root cause analysis opened (RCA-0912).

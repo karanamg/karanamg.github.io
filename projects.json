@@ -8,6 +8,29 @@
   },
   "projects": [
     {
+      "slug": "aras-ai-data-hub",
+      "title": "Integrasi Connect - Embedded AI Data Hub (Boomi OEM demo)",
+      "summary": "A white-label, multi-tenant portal where each customer connects SAP, Salesforce, file drops and Malaysian government open data, maps fields onto an AI knowledge document, and runs one configuration-driven Boomi pipeline that masks personal data and chunks content for RAG. Includes a live Boomi run view, AI knowledge search with citations and a composable API catalogue.",
+      "highlights": [
+        "One Boomi pipeline for every tenant: Route by source system, tenant mapping, PII masking (MyKad, phone, e-mail), chunking",
+        "Live sources: SAP API Business Hub sandbox and data.gov.my; Salesforce simulated; CSV parsed in Boomi",
+        "Onboard a new customer, map and run it in minutes - no code, no redeploy"
+      ],
+      "path": "projects/aras-ai-data-hub/public/",
+      "thumbnail": "projects/aras-ai-data-hub/thumbnail.jpg",
+      "source": "https://github.com/karanamg/karanamg.github.io/tree/main/projects/aras-ai-data-hub",
+      "tags": [
+        "Boomi",
+        "Embedded / OEM",
+        "RAG",
+        "SAP",
+        "Salesforce",
+        "Open data"
+      ],
+      "date": "2026-11",
+      "status": "Live demo (Railway gateway)"
+    },
+    {
       "slug": "three-way-match",
       "title": "Copperleaf Provisions - AP Invoice 3-Way Match",
       "summary": "Upload a vendor invoice PDF and watch a Boomi process match it against the purchase order and goods receipts: quantity, unit price and line value with tolerances, then approval for payment or routing to the AP exception queue. Includes a matching dashboard and seven sample invoices.",

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Integrasi Connect · AI Data Hub</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<aside class="side">
+  <div class="logo"><div class="mark">IC</div><div><b>Integrasi Connect</b><span>AI Data Hub</span></div></div>
+  <label class="side-label" for="tenantSel">Customer (tenant)</label>
+  <div class="tenant-pick"><span id="tenantDot" class="dot"></span><select id="tenantSel"></select></div>
+  <button id="newTenant" class="side-new">+ Onboard a new customer</button>
+  <nav id="nav">
+    <a data-page="overview" class="active"><i>◎</i>Overview</a>
+    <a data-page="connections"><i>⇄</i>Connections</a>
+    <a data-page="mapping"><i>⌗</i>Mapping studio</a>
+    <a data-page="run"><i>▶</i>Run &amp; monitor</a>
+    <a data-page="knowledge"><i>✦</i>AI knowledge</a>
+    <a data-page="apis"><i>{}</i>Composable APIs</a>
+    <a data-page="architecture"><i>▦</i>Architecture</a>
+  </nav>
+  <div class="side-foot">
+    <div class="powered">Integration engine<br><b>Powered by Boomi</b></div>
+    <div class="by">An Aras Integrasi solution</div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="top">
+    <div><h1 id="tenantName">…</h1><div id="tenantMeta" class="meta"></div></div>
+    <div class="top-right"><span id="envBadge" class="env"></span><span id="conn" class="conn">Checking Boomi…</span></div>
+  </header>
+
+  <section id="page-overview" class="page active"></section>
+  <section id="page-connections" class="page"></section>
+  <section id="page-mapping" class="page"></section>
+  <section id="page-run" class="page"></section>
+  <section id="page-knowledge" class="page"></section>
+  <section id="page-apis" class="page"></section>
+  <section id="page-architecture" class="page"></section>
+</div>
+
+<div id="modal" class="modal hidden"><div class="modal-card" id="modalCard"></div></div>
+<div id="toast" class="toast hidden"></div>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
