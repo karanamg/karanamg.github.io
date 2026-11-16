@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Integrasi Connect · AI Data Hub</title>
   <link rel="stylesheet" href="app.css">
+  <!-- Boomi EmbedKit: embedded Boomi AI agent -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@boomi/embedkit-cdn@1.9/embedkit-cdn.css" />
 </head>
 <body>
 <aside class="side">
@@ -40,11 +42,24 @@
   <section id="page-knowledge" class="page"></section>
   <section id="page-apis" class="page"></section>
   <section id="page-architecture" class="page"></section>
+
+  <!-- Boomi AI agent (EmbedKit) mounts here -->
+  <div id="boomi-agent"></div>
 </div>
 
 <div id="modal" class="modal hidden"><div class="modal-card" id="modalCard"></div></div>
 <div id="toast" class="toast hidden"></div>
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script>
+  window.BoomiEmbed = {
+    publicToken: "pk_566011f4-ef0e-4cd9-aa23-02b5e1cebfbf",
+    agentId: "project_94f3187e-5223-4d4c-be23-9d5641829405",
+    mountId: "boomi-agent",
+    serverBase: "https://api.boomi.space/api/v1",
+    userId: "integrasi-connect-demo"
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@boomi/embedkit-cdn@1.9/embedkit-cdn.umd.js" async></script>
 </body>
 </html>
