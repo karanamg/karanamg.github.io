@@ -201,7 +201,7 @@ async function handle(req, res) {
   const t = tenantById(m[1]); if (!t) return send(res, 404, { error: 'Tenant not found' });
   const sub = m[2] || '';
   if (!sub && M === 'GET') return send(res, 200, { ...t, summary: tenantSummary(t) });
-  if (sub === '/jobs') return send(res, 200, jobs.filter((j) => j.tenantId === t.id).slice(0, 50).map(({ result, ...j }) => j));
+  if (sub === '/jobs') return send(res, 200, jobs.filter((j) => j.tenantId === t.id).slice(0, 50).map(({ result, mapping, policy, ...j }) => j));
   if ((m = sub.match(/^\/jobs\/([\w-]+)$/))) { const j = jobs.find((x) => x.id === m[1] && x.tenantId === t.id); return j ? send(res, 200, j) : send(res, 404, { error: 'Job not found' }); }
   if (sub === '/knowledge') {
     const by = {}; (index[t.id] || []).forEach((c) => { (by[c.connId] ||= { chunks: 0, docs: new Set() }).chunks++; by[c.connId].docs.add(c.docId); });
@@ -246,7 +246,7 @@ async function handle(req, res) {
                     ok: Boolean(result), error: result ? null : (r.json?.error || r.error || `Boomi returned HTTP ${r.status}`), stats: result?.stats || null,
                     executionId: result?.executionId || null, latest: true };
       if (mode === 'ingest' && job.ok) jobs.forEach((j) => { if (j.tenantId === t.id && j.connId === c.id) j.latest = false; });
-      jobs.unshift({ ...job, result: result ? { ...result, chunks: undefined, chunkCount: (result.chunks || []).length } : null }); save.jobs();
+      jobs.unshift({ ...job, mapping: reqBody.mapping, policy: reqBody.policy, result: result ? { ...result, chunks: undefined, chunkCount: (result.chunks || []).length } : null }); save.jobs();
       return send(res, result ? 200 : 502, { job, result: result ? { ...result, chunks: (result.chunks || []).slice(0, 5), chunkCount: (result.chunks || []).length } : null,
                                              boomi: { host: BOOMI_BASE ? new URL(BOOMI_BASE).host : null, path: `POST ${API_BASE}/ingest`, ms: r.ms }, embedMs, indexed: (index[t.id] || []).length });
     }

@@ -101,11 +101,12 @@ RENDER.overview = async () => {
   $('#ovRunAll').onclick = () => go('run', { all: true });
   $$('[data-go]', el).forEach((b) => (b.onclick = () => go(b.dataset.go)));
   $$('[data-run]', el).forEach((b) => (b.onclick = () => go('run', { conn: b.dataset.run })));
+  $$('[data-job]', el).forEach((tr) => (tr.onclick = async () => { await go('run'); showJob(tr.dataset.job); }));
 };
 function jobsTable(jobs) {
   if (!jobs.length) return '<div class="empty">No runs yet</div>';
   return `<div class="wrap"><table class="t jobs"><tr><th>When</th><th>Connection</th><th class="n">Records</th><th class="n">Chunks</th><th class="n">PII</th><th class="n">Boomi</th><th>Result</th></tr>
-    ${jobs.map((j) => `<tr><td>${esc(when(j.at))}</td><td>${sysTag(j.type)} ${esc(j.connName)}${j.mode === 'preview' ? ' <span class="muted small">(preview)</span>' : ''}</td>
+    ${jobs.map((j) => `<tr ${j.ok ? `class="click" data-job="${esc(j.id)}" title="Show the data fetched and the mapping applied in this run"` : ''}><td>${esc(when(j.at))}</td><td>${sysTag(j.type)} ${esc(j.connName)}${j.mode === 'preview' ? ' <span class="muted small">(preview)</span>' : ''}</td>
       <td class="n">${j.stats ? num(j.stats.sourceRecords) : '-'}</td><td class="n">${j.stats ? num(j.stats.chunks) : '-'}</td><td class="n">${j.stats ? num(j.stats.piiMasked) : '-'}</td>
       <td class="n">${secs(j.boomiMs)}</td><td>${j.ok ? '<span class="badge b-good">✔</span>' : `<span class="badge b-bad" title="${esc(j.error)}">✖</span>`}</td></tr>`).join('')}</table></div>`;
 }
@@ -217,9 +218,9 @@ RENDER.mapping = async (opts = {}) => {
             <div class="small mt">Chunk size: <b id="chunkVal">${d.policy.chunkSize || 500}</b> characters <input type="range" id="chunkSize" min="200" max="1500" step="50" value="${d.policy.chunkSize || 500}" style="vertical-align:middle;width:180px"></div>
             <div class="small">Classification tag: <span class="cls">${esc(T.classification)}</span> (tenant policy)</div></div>
         </div>
-        <div id="docPrev"></div>
       </div>
-    </div>`;
+    </div>
+    <div id="docPrev"></div>`;
   $('#mapConn').onchange = (e) => RENDER.mapping({ conn: e.target.value });
   ['tplId', 'tplTitle'].forEach((id) => { const i = $('#' + id); i.onfocus = () => (lastTpl = id === 'tplId' ? 'id' : 'title'); i.oninput = () => { d.mapping[id === 'tplId' ? 'id' : 'title'] = i.value; }; });
   $('#autoDetect').onchange = (e) => (d.policy.autoDetect = e.target.checked);
@@ -269,10 +270,73 @@ async function runPreview(c, d) {
     const r = await api(`/api/tenants/${T.id}/connections/${c.id}/preview`, { method: 'POST', body: JSON.stringify({ mapping: d.mapping, policy: d.policy }) });
     if (!r.result) throw new Error(r.job.error);
     previews[c.id] = r.result;
-    box.innerHTML = `<div class="card"><div class="head"><h2>Preview through Boomi</h2><span class="muted small">${secs(r.boomi.ms)} · ${num(r.result.stats.piiMasked)} PII values masked in ${num(r.result.stats.sourceRecords)} records</span></div>
-      ${r.result.documents.map((doc) => `<div class="docprev"><b>${esc(doc.docId)}</b> · ${doc.chunks} chunk(s)<pre>${maskHtml(doc.text)}</pre>
-        <div class="md">${Object.entries(doc.metadata).map(([k, v]) => `<code>${esc(k)}=${esc(v)}</code>`).join(' ')}</div></div>`).join('')}</div>`;
+    box.innerHTML = `<div class="card"><div class="head"><h2>Preview through Boomi</h2><span class="muted small">${secs(r.boomi.ms)} · ${num(r.result.stats.piiMasked)} PII values masked in ${num(r.result.stats.sourceRecords)} records · not saved until you click Save mapping</span></div>
+      <div id="linPrev" class="lin"></div></div>`;
+    renderLineage('linPrev', c, r.result, d.mapping, d.policy, 'mapping');
   } catch (e) { box.innerHTML = `<div class="card">Preview failed: ${esc(e.message)}</div>`; }
+}
+
+/* ---------------- data lineage: source records -> mapping applied -> AI documents ---------------- */
+const LIN = {};
+const fieldLabel = (f) => { const s = String(f).split('__c').join('').split('_').join(' ').replace(/([a-z])([A-Z])/g, '$1 $2'); return s.charAt(0).toUpperCase() + s.slice(1); };   // same rule as the Boomi script
+const fillTpl = (tpl, rec) => String(tpl || '').replace(/\{([^}]+)\}/g, (_, f) => rec[f] ?? '').trim();
+const tplFields = (tpl) => [...String(tpl || '').matchAll(/\{([^}]+)\}/g)].map((m) => m[1]);
+const cut = (v, n = 110) => { const s = String(v ?? ''); return s.length > n ? s.slice(0, n) + '…' : s; };
+function contentValue(doc, field) {
+  const pre = fieldLabel(field) + ': ', line = (doc?.text || '').split('\n').find((l) => l.startsWith(pre));
+  return line == null ? null : line.slice(pre.length);
+}
+function renderLineage(boxId, c, res, mapping = {}, policy = {}, tab = 'source', rec = 0) {
+  const box = document.getElementById(boxId); if (!box) return;
+  LIN[boxId] = { c, res, mapping, policy };
+  const sample = res.sample || [], docs = res.documents || [], fieldNames = (res.fields || []).map((f) => f.name);
+  const pii = new Set((res.fields || []).filter((f) => f.pii).map((f) => f.name)), masked = new Set(policy.maskFields || []);
+  const total = res.stats?.sourceRecords ?? sample.length, system = res.connection?.system || SYS[c.type]?.label || c.type;
+  const tabs = [['source', `1 · Data fetched from source <span class="cnt">${num(total)}</span>`], ['mapping', '2 · Mapping applied'], ['docs', `3 · Sent to the AI platform <span class="cnt">${num(res.stats?.documents ?? docs.length)}</span>`]];
+  let body = '';
+  if (tab === 'source') {
+    body = !sample.length ? '<div class="empty">Boomi did not return the source records for this run. Run it again to see them.</div>' : `
+      <p class="muted small">Raw records exactly as Boomi read them from <b>${esc(system)}</b>${sample.length < total ? ` · showing the first ${sample.length} of ${num(total)}` : ` · all ${num(total)} records`}.
+        Fields marked <span class="badge b-pii">PII</span> are masked inside Boomi before anything reaches the AI platform; this raw view is only in the Integrasi Connect admin portal.</p>
+      <div class="wrap lin-src"><table class="t"><tr><th>#</th>${fieldNames.map((f) => `<th>${esc(f)}${masked.has(f) || pii.has(f) ? ' <span class="badge b-pii">PII</span>' : ''}</th>`).join('')}</tr>
+        ${sample.map((r, i) => `<tr><td class="muted">${i + 1}</td>${fieldNames.map((f) => `<td class="${masked.has(f) || pii.has(f) ? 'pii-cell' : ''}" title="${esc(r[f])}">${esc(cut(r[f]))}</td>`).join('')}</tr>`).join('')}</table></div>`;
+  } else if (tab === 'mapping') {
+    const raw = sample[rec] || {}, doc = docs[rec];
+    const status = (src, rawV, outV) => {
+      if (outV == null) return '<span class="muted small">-</span>';
+      if ((Array.isArray(src) ? src : [src]).some((f) => masked.has(f))) return '<span class="badge b-pii">Masked · field policy</span>';
+      if (String(outV) !== String(rawV) && /\[(MYKAD|EMAIL|PHONE|REDACTED)\]/.test(outV)) return '<span class="badge b-pii">Masked · PII detected</span>';
+      return '<span class="badge b-good">✔ Copied</span>';
+    };
+    const rows = [];
+    if (mapping.id) rows.push({ grp: 'Identity', tgt: 'Document ID', src: tplFields(mapping.id), how: `template <code>${esc(mapping.id)}</code>`, raw: fillTpl(mapping.id, raw), out: doc?.docId });
+    if (mapping.title) rows.push({ grp: 'Identity', tgt: 'Title', src: tplFields(mapping.title), how: `template <code>${esc(mapping.title)}</code>`, raw: fillTpl(mapping.title, raw), out: doc?.title });
+    (mapping.content || []).forEach((f, i) => rows.push({ grp: 'Content (embedded for search)', tgt: `Line ${i + 1} · "${fieldLabel(f)}"`, src: [f], how: '', raw: raw[f], out: doc ? contentValue(doc, f) : undefined }));
+    (mapping.metadata || []).filter((m) => m.from && m.to).forEach((m) => rows.push({ grp: 'Metadata (filters & citations)', tgt: `metadata.${m.to}`, src: [m.from], how: '', raw: raw[m.from], out: doc?.metadata?.[m.to] }));
+    ['source_system', 'connection', 'classification'].forEach((k) => doc?.metadata?.[k] != null && rows.push({ grp: 'Added by Boomi (tenant policy)', tgt: `metadata.${k}`, src: [], how: 'set automatically', raw: '', out: doc.metadata[k], auto: true }));
+    const used = new Set(rows.flatMap((r) => r.src)), dropped = fieldNames.filter((f) => !used.has(f));
+    let grp = '';
+    body = !sample.length ? '<div class="empty">Run the source to see how this mapping transforms its records.</div>' : `
+      <div class="head" style="margin-bottom:8px"><p class="muted small" style="margin:0">${boxId === 'linPrev' ? `The mapping you are editing for <b>${esc(T.name)}</b> (not saved yet), applied by Boomi in preview mode.` : `The mapping used for <b>${esc(T.name)}</b>, applied by Boomi at run time.`} Pick a record to trace each value from the source to the AI document.</p>
+        <select data-linrec>${sample.map((r, i) => `<option value="${i}" ${i === rec ? 'selected' : ''}>Record ${i + 1}${docs[i] ? ' · ' + esc(cut(docs[i].docId, 30)) : ''}</option>`).join('')}</select></div>
+      <div class="wrap"><table class="t lin-map"><tr><th>Target in AI document</th><th>Source field</th><th>Value in source</th><th></th><th>Value sent to AI platform</th><th>Rule</th></tr>
+        ${rows.map((r) => `${r.grp !== grp ? `<tr class="grp"><td colspan="6">${esc((grp = r.grp))}</td></tr>` : ''}<tr>
+          <td><b>${esc(r.tgt)}</b>${r.how ? `<div class="muted small">${r.how}</div>` : ''}</td>
+          <td>${r.src.length ? r.src.map((f) => `<code>${esc(f)}</code>`).join(' ') : '<span class="muted small">-</span>'}</td>
+          <td class="${r.src.some((f) => masked.has(f) || pii.has(f)) ? 'pii-cell' : ''}">${r.auto ? '<span class="muted small">-</span>' : esc(cut(r.raw, 160)) || '<i class="muted">empty</i>'}</td>
+          <td class="arrow">→</td>
+          <td>${r.out == null ? `<i class="muted">${doc ? 'empty - skipped' : 'not in this response'}</i>` : maskHtml(cut(r.out, 160))}</td>
+          <td>${r.auto ? '<span class="badge b-neutral">Policy</span>' : status(r.src, r.raw, r.out)}</td></tr>`).join('')}</table></div>
+      <p class="small mt"><b>Not sent to the AI platform</b> (fields not in the mapping): ${dropped.map((f) => `<span class="chip off">${esc(f)}</span>`).join(' ') || '<span class="muted">none - every field is used</span>'}</p>
+      <p class="muted small">PII policy: masks ${masked.size ? [...masked].map((f) => `<code>${esc(f)}</code>`).join(' ') : 'no fields'}${policy.autoDetect !== false ? ', and detects MyKad numbers, phone numbers and e-mail addresses in free text' : ''} · chunk size ${esc(policy.chunkSize || 500)} characters.</p>`;
+  } else {
+    body = `<p class="muted small">The RAG-ready documents Boomi produced: masked, mapped and tagged with metadata${res.mode === 'preview' ? ' (preview, so nothing was indexed)' : ', then embedded into the tenant vector index'}.</p>
+      <div class="result-docs">${docs.map((d) => `<div class="rdoc"><div class="tt">${maskHtml(d.title)} <span class="muted small">· ${esc(d.docId)} · ${d.chunks} chunk(s)</span></div><div class="tx">${maskHtml(d.text.split('\n').slice(1).join('\n'))}</div>
+        <div class="mm">${Object.entries(d.metadata).filter(([k]) => !['tenant', 'ingested_at'].includes(k)).map(([k, v]) => `<span>${esc(k)}: ${esc(v)}</span>`).join('')}</div></div>`).join('') || '<div class="empty">No documents</div>'}</div>`;
+  }
+  box.innerHTML = `<div class="lin-tabs">${tabs.map(([k, l]) => `<button class="lin-tab ${k === tab ? 'active' : ''}" data-lintab="${k}">${l}</button>`).join('<span class="lin-arrow">›</span>')}</div><div class="lin-body">${body}</div>`;
+  $$('[data-lintab]', box).forEach((b) => (b.onclick = () => renderLineage(boxId, c, res, mapping, policy, b.dataset.lintab, rec)));
+  const sel = $('[data-linrec]', box); if (sel) sel.onchange = () => renderLineage(boxId, c, res, mapping, policy, 'mapping', Number(sel.value));
 }
 
 /* ---------------- run & monitor ---------------- */
@@ -300,16 +364,33 @@ RENDER.run = async (opts = {}) => {
       </div>
       <div>
         <div class="card"><div class="head"><h2>Live Boomi process</h2><span class="muted small" id="runLabel">Choose a source to run</span></div><ol class="pipeline" id="pipe"></ol></div>
-        <div id="runResult"></div>
       </div>
-    </div>`;
+    </div>
+    <div id="runResult"></div>`;
   resetPipe();
   $('#runAll').onclick = () => runMany(T.connections.map((c) => c.id));
   $$('[data-one]', el).forEach((b) => (b.onclick = () => runMany([b.dataset.one])));
   drawJobs();
   if (opts.all) runMany(T.connections.map((c) => c.id)); else if (opts.conn) runMany([opts.conn]);
 };
-async function drawJobs() { const j = await api(`/api/tenants/${T.id}/jobs`); const b = $('#jobsBox'); if (b) b.innerHTML = jobsTable(j.slice(0, 10)); }
+async function drawJobs() {
+  const j = await api(`/api/tenants/${T.id}/jobs`); const b = $('#jobsBox'); if (!b) return;
+  b.innerHTML = jobsTable(j.slice(0, 10)) + (j.some((x) => x.ok) ? '<p class="muted small mt">Click a run to see the data fetched and the mapping applied.</p>' : '');
+  $$('[data-job]', b).forEach((tr) => (tr.onclick = () => showJob(tr.dataset.job)));
+}
+async function showJob(id) {
+  if (RUNNING) return toast('A run is in progress');
+  const box = $('#runResult'); if (!box) return;
+  box.innerHTML = '<div class="card empty">Loading run…</div>';
+  try {
+    const j = await api(`/api/tenants/${T.id}/jobs/${id}`), c = T.connections.find((x) => x.id === j.connId) || { id: j.connId, name: j.connName, type: j.type };
+    if (!j.result) throw new Error(j.error || 'This run has no result');
+    box.innerHTML = `<div class="card"><div class="head"><h2>${j.mode === 'preview' ? 'Preview' : 'Run'} · ${esc(j.connName)} <span class="muted small">${esc(when(j.at))}</span></h2><span class="muted small">Boomi execution <code>${esc(j.executionId || '')}</code> · ${secs(j.boomiMs)}</span></div>
+      <div id="linJob" class="lin"></div></div>`;
+    renderLineage('linJob', c, j.result, j.mapping || c.mapping || {}, j.policy || c.policy || {}, 'source');
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { box.innerHTML = `<div class="card">${esc(e.message)}</div>`; }
+}
 function resetPipe(type) {
   $('#pipe').innerHTML = STEPS.map((s, i) => `<li class="step" id="st-${s.id}"><div class="d">${i + 1}</div>
     <div><div class="w ${s.boomi ? 'boomi' : s.ai ? 'ai' : ''}">${esc(s.w)}</div><div class="ti">${esc(s.id === 'SOURCE_FETCHED' && type ? SYS[type].source : s.id === 'ROUTE' && type ? `Route by source system → ${type}` : s.t)}</div><div class="de"></div></div><div class="ms"></div></li>`).join('');
@@ -357,8 +438,8 @@ async function runOne(connId) {
       <div class="kpi"><div class="k">Documents</div><div class="v">${num(st.documents)}</div><div class="s">${num(st.fieldsMapped)} fields mapped</div></div>
       <div class="kpi"><div class="k">Chunks</div><div class="v">${num(res.chunkCount)}</div><div class="s">Max ${esc(c.policy?.chunkSize || 500)} characters</div></div>
       <div class="kpi"><div class="k">PII masked</div><div class="v">${num(st.piiMasked)}</div><div class="s">${Object.entries(st.piiByType || {}).filter(([, v]) => v).map(([k, v]) => `${v} ${k === 'FIELD' ? 'fields' : k}`).join(', ') || 'none found'}</div></div></div>
-    <div class="result-docs">${res.documents.slice(0, 8).map((d) => `<div class="rdoc"><div class="tt">${maskHtml(d.title)}</div><div class="tx">${maskHtml(d.text.split('\n').slice(1).join('\n'))}</div>
-      <div class="mm">${Object.entries(d.metadata).filter(([k]) => !['tenant', 'ingested_at'].includes(k)).map(([k, v]) => `<span>${esc(k)}: ${esc(v)}</span>`).join('')}</div></div>`).join('')}</div></div>`;
+    <div id="linRun" class="lin"></div></div>`;
+  renderLineage('linRun', c, res, c.mapping || {}, c.policy || {}, 'source');
 }
 
 /* ---------------- AI knowledge ---------------- */
@@ -470,6 +551,20 @@ RENDER.architecture = () => {
         <li>Clean, mapped, PII-masked, chunked documents with metadata</li><li>Composable APIs for preview, ingest and every source</li>
         <li>Feeds the vector database and LLM running on MTAI GPU</li></ul></div>
     </div>`;
+};
+
+/* ---------------- reset the demo ---------------- */
+$('#resetDemo').onclick = async () => {
+  if (!confirm('Reset the demo?\n\nThis clears every run, the AI knowledge index and any onboarded customers, and restores the three demo tenants with their original connections and mappings.')) return;
+  const b = $('#resetDemo'); b.disabled = true; b.textContent = 'Resetting…';
+  try {
+    await api('/api/reset-demo', { method: 'POST', body: '{}' });
+    for (const k of Object.keys(drafts)) drafts[k] = undefined;
+    for (const k of Object.keys(previews)) previews[k] = undefined;
+    MAP_CONN = null; closeModal(); await loadTenants(); await selectTenant(TENANTS[0]?.id, 'overview');
+    toast('Demo reset - all tenants are back to their starting state');
+  } catch (e) { toast('Reset failed: ' + e.message); }
+  finally { b.disabled = false; b.textContent = '↺ Reset demo'; }
 };
 
 /* ---------------- onboard a new customer ---------------- */

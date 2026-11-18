@@ -74,9 +74,9 @@ for (int i = 0; i < dataContext.getDataCount(); i++) {
     stats: [sourceRecords: records.size(), documents: docs.size(), chunks: chunks.size(), piiMasked: masked, piiByType: counts,
             fieldsMapped: (map.content ?: []).size() + (map.metadata ?: []).size()],
     fields: fields,
-    documents: mode == "preview" ? docs.take(3) : docs,
+    documents: mode == "preview" ? docs.take(10) : docs,
     chunks: mode == "preview" ? [] : chunks,
-    sample: mode == "preview" ? records.take(5) : [],
+    sample: records.take(10),   /* source records as fetched, shown in the portal lineage view */
     trace: [[step: "REQUEST_RECEIVED", at: iso(dpp("DPP_TS_START")), detail: "${tenant.name ?: tenant.id} - ${conn.name ?: type} (${mode})".toString()],
             [step: "SOURCE_FETCHED", at: iso(dpp("DPP_TS_FETCH")), detail: "${records.size()} records from ${system}".toString()],
             [step: "MAPPED", at: now, detail: "${docs.size()} documents using the tenant mapping (${(map.content ?: []).size()} content, ${(map.metadata ?: []).size()} metadata fields)".toString()],

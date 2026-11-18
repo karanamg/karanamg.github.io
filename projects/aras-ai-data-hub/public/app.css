@@ -172,3 +172,20 @@ pre.json { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 10p
 
 table.jobs td:first-child { white-space: nowrap; } table.jobs td:nth-child(2) .sys { display: block; width: max-content; margin-bottom: 2px; }
 .fields-note { font-size: 11.5px; color: var(--ink-2); }
+
+/* data lineage: source -> mapping -> AI documents */
+.lin { margin-top: 12px; }
+.lin-tabs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+.lin-tab { border: 0; background: none; font: inherit; font-size: 13px; padding: 8px 10px; color: var(--ink-2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.lin-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.lin-tab .cnt { background: #eef2f6; border-radius: 10px; padding: 0 7px; font-size: 11px; margin-left: 3px; color: var(--ink-2); }
+.lin-arrow { color: #94a3b8; }
+.lin-src { max-height: 420px; overflow: auto; }
+.lin-src td { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+.pii-cell { background: #fdf6f2; }
+table.lin-map td { font-size: 12.5px; }
+table.lin-map td:nth-child(3), table.lin-map td:nth-child(5) { width: 30%; }
+table.lin-map td.arrow { color: #94a3b8; font-weight: 700; text-align: center; width: 18px; }
+table.lin-map tr.grp td { background: #f6f8fa; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; color: var(--ink-2); font-weight: 600; padding: 5px 8px; }
+.chip.off { padding: 3px 10px; background: #f1f5f9; color: var(--ink-2); text-decoration: line-through; text-decoration-color: #94a3b8; }
+table.t tr.click { cursor: pointer; } table.t tr.click:hover td { background: #f3fbfa; }
