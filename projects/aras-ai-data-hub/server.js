@@ -54,7 +54,7 @@ const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(
 /* ---------------- embeddings + retrieval (demo model: hashed term vectors, runs locally) ---------------- */
 const DIM = 1024;
 const STOP = new Set('a an the and or of to in on for with at by from is are was were be been it this that these those as about into over after before than then there their they we you our your i me my he she his her its not no yes do does did has have had can could would should will which who what when where why how all any some each per more most less very also just only'.split(' '));
-const stem = (w) => w.replace(/(ies)$/, 'y').replace(/(ing|ed|es|s)$/, '').replace(/(.)\1$/, '$1');
+const stem = (w) => w.replace(/(ies)$/, 'y').replace(/(ing|ed|es|s)$/, '').replace(/(.)\1$/, '$1').replace(/e$/, '');   // eBike/eBikes and case/cases share a stem
 function tokens(text) {
   return String(text).toLowerCase().replace(/\[(mykad|email|phone|redacted)\]/g, ' ').match(/[a-z0-9]+/g)?.filter((w) => w.length > 1 && !STOP.has(w)).map(stem) || [];
 }
