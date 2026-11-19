@@ -22,6 +22,7 @@ One configuration-driven Boomi pipeline serves every tenant. Mappings and polici
   - Branch 2: **AI data prep** (tenant mapping, PII masking for MyKad / phone / e-mail and configured fields, chunking), then a Decision (preview or ingest).
 - Sources:
   - `[SUB] SAPHub Search Products`: the existing SAP S/4HANA sandbox, OData Client, live.
+  - `[SUB] AIH SAP S/4HANA Sales Orders`: reuses `[SUB] SAPHub Get Sales Orders` (100 orders with lines, live sandbox) and turns each order into one record.
   - `[SUB] AIH Salesforce Service Cloud Cases (Simulated)`: split by tenant org, then combine.
   - `[SUB] AIH File Drop (CSV)`.
   - `[SUB] AIH Malaysia Open Data (data.gov.my)`: REST, live.
@@ -36,7 +37,7 @@ One configuration-driven Boomi pipeline serves every tenant. Mappings and polici
 | Tenant | Sources | Try asking |
 |---|---|---|
 | Universiti Nusantara (AISLE student wellbeing) | Salesforce cases, SIS survey CSV, data.gov.my school enrolment | "Which students asked for counselling because of exam stress?" |
-| Perkasa Manufacturing Berhad | SAP S/4HANA products (live), Salesforce complaints, CMMS maintenance CSV | "What problems have we had with chiller pumps?" |
+| Perkasa Manufacturing Berhad | SAP S/4HANA products and sales orders (live), Salesforce complaints, CMMS maintenance CSV | "What problems have we had with chiller pumps?" |
 | Klinik Sejahtera Health Group | Salesforce patient cases, feedback CSV, data.gov.my hospital beds | "What do patients complain about at the Klang clinic?" |
 
 ## Run locally

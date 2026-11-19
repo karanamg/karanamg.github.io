@@ -19,7 +19,7 @@ def findRecords = { o -> o instanceof List ? o : (o instanceof Map ? (o.values()
 def PII = [MYKAD: ~/\b\d{6}-\d{2}-\d{4}\b/, EMAIL: ~/[\w.+-]+@[\w-]+(\.[\w-]+)+/, PHONE: ~/(?<!\d)(\+?60|0)[- ]?\d{1,2}[- ]?\d{3,4}[- ]?\d{4}(?!\d)/]
 def PII_NAME = ~/(?i)(contact_?name|full_?name|patient_?name|student_?name|^name$|email|phone|mobile|mykad|nric|ic_?no|passport|home_?address)/
 def label = { String f -> f.replace("__c", "").replace("_", " ").replaceAll(/([a-z])([A-Z])/, '$1 $2').capitalize() }
-def SYSTEMS = [SAP_S4HANA: "SAP S/4HANA", SALESFORCE: "Salesforce Service Cloud", FILE_CSV: "File drop (CSV)", OPEN_DATA: "data.gov.my open data"]
+def SYSTEMS = [SAP_S4HANA: "SAP S/4HANA", SAP_SALES_ORDERS: "SAP S/4HANA", SALESFORCE: "Salesforce Service Cloud", FILE_CSV: "File drop (CSV)", OPEN_DATA: "data.gov.my open data"]
 def slurp = new JsonSlurper()
 
 for (int i = 0; i < dataContext.getDataCount(); i++) {

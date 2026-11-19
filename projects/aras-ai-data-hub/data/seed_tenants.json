@@ -174,6 +174,46 @@
      }
     },
     {
+     "id": "so",
+     "name": "SAP S/4HANA sales orders",
+     "type": "SAP_SALES_ORDERS",
+     "config": {},
+     "mapping": {
+      "id": "SO-{salesOrder}",
+      "title": "Sales order {salesOrder} for customer {customer} ({status})",
+      "content": [
+       "lines",
+       "orderValue",
+       "orderDate",
+       "requestedDelivery",
+       "deliveryStatus"
+      ],
+      "metadata": [
+       {
+        "from": "customer",
+        "to": "customer"
+       },
+       {
+        "from": "materials",
+        "to": "materials"
+       },
+       {
+        "from": "orderDate",
+        "to": "order_date"
+       },
+       {
+        "from": "status",
+        "to": "status"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
      "id": "sf",
      "name": "Customer complaints (Service Cloud)",
      "type": "SALESFORCE",
@@ -261,7 +301,9 @@
    "questions": [
     "What problems have we had with chiller pumps?",
     "Which customers are unhappy and why?",
-    "What caused the seal leakage?"
+    "What caused the seal leakage?",
+    "Which customers ordered eBikes?",
+    "Which headlight orders are still open?"
    ]
   },
   {

@@ -179,7 +179,7 @@ async function handle(req, res) {
   if (p === '/api/connectors') { const r = await cachedGet(`${API_BASE}/connectors`); return send(res, r.status === 200 ? 200 : 502, r.json || { error: r.error || `Boomi HTTP ${r.status}` }); }
   if (p === '/api/boomi' && M === 'GET') {   // composable API "try it" - GET routes only, allow-listed
     const target = url.searchParams.get('path') || '';
-    if (!/^\/ws\/rest\/(aras\/v1\/(connectors|sources\/salesforce\/cases|sources\/opendata)|saphub\/v1\/products)(\?|$)/.test(target)) return send(res, 400, { error: 'Only the read-only demo APIs can be called from here.' });
+    if (!/^\/ws\/rest\/(aras\/v1\/(connectors|sources\/salesforce\/cases|sources\/opendata)|saphub\/v1\/(products|salesorders))(\?|$)/.test(target)) return send(res, 400, { error: 'Only the read-only demo APIs can be called from here.' });
     const r = await boomi('GET', target);
     return send(res, 200, { status: r.status, ms: r.ms, path: target, body: r.json ?? r.text ?? r.error });
   }
@@ -220,7 +220,7 @@ async function handle(req, res) {
     fs.writeFileSync(path.join(UPLOADS, t.id, name), buf); return send(res, 201, { fileName: name, bytes: buf.length });
   }
   if (sub === '/connections' && M === 'POST') {
-    const b = await readJsonBody(req); if (!['SAP_S4HANA', 'SALESFORCE', 'FILE_CSV', 'OPEN_DATA'].includes(b.type)) return send(res, 400, { error: 'Unknown connector type.' });
+    const b = await readJsonBody(req); if (!['SAP_S4HANA', 'SAP_SALES_ORDERS', 'SALESFORCE', 'FILE_CSV', 'OPEN_DATA'].includes(b.type)) return send(res, 400, { error: 'Unknown connector type.' });
     let id = slug(b.name || b.type); while (t.connections.some((c) => c.id === id)) id += '-2';
     const c = { id, name: b.name || b.type, type: b.type, config: b.config || {}, mapping: { id: '', title: '', content: [], metadata: [] }, policy: { maskFields: [], autoDetect: true, chunkSize: 500 } };
     t.connections.push(c); save.tenants(); return send(res, 201, c);

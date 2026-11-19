@@ -19,6 +19,7 @@ async function api(path, opts = {}) {
 
 const SYS = {
   SAP_S4HANA: { label: 'SAP S/4HANA', source: 'SAP S/4HANA · OData Client → API_PRODUCT_SRV (live sandbox)' },
+  SAP_SALES_ORDERS: { label: 'SAP S/4HANA', source: 'SAP S/4HANA · OData Client → API_SALES_ORDER_SRV, orders + lines (live sandbox)' },
   SALESFORCE: { label: 'Salesforce', source: 'Salesforce Service Cloud · SOQL query on Case (simulated org)' },
   FILE_CSV: { label: 'File / CSV', source: 'File drop · CSV parsed in Boomi' },
   OPEN_DATA: { label: 'data.gov.my', source: 'data.gov.my · REST GET /data-catalogue/ (live)' }
@@ -486,7 +487,8 @@ RENDER.apis = () => {
     ['GET', '/ws/rest/aras/v1/connectors', 'Connector catalogue (types, settings, Boomi connector used).', '/ws/rest/aras/v1/connectors'],
     ['GET', `/ws/rest/aras/v1/sources/salesforce/cases?tenant=${tid}`, 'Salesforce Service Cloud Cases for a tenant org (simulated).', `/ws/rest/aras/v1/sources/salesforce/cases?tenant=${tid}`],
     ['GET', '/ws/rest/aras/v1/sources/opendata?dataset=hospital_beds&filter=Selangor@state&sort=-date&limit=5', 'Malaysia open data (data.gov.my) through Boomi.', '/ws/rest/aras/v1/sources/opendata?dataset=hospital_beds&filter=Selangor@state&sort=-date&limit=5'],
-    ['GET', '/ws/rest/saphub/v1/products?search=pump', 'SAP S/4HANA product search (existing SAPHub Product API, reused as a building block).', '/ws/rest/saphub/v1/products?search=pump']];
+    ['GET', '/ws/rest/saphub/v1/products?search=pump', 'SAP S/4HANA product search (existing SAPHub Product API, reused as a building block).', '/ws/rest/saphub/v1/products?search=pump'],
+    ['GET', '/ws/rest/saphub/v1/salesorders', 'SAP S/4HANA sales orders with their lines (100 orders, SAPHub Product API).', '/ws/rest/saphub/v1/salesorders']];
   const portalApis = [['GET', '/api/tenants', 'List tenants (customers) with knowledge statistics.'], ['POST', '/api/tenants', 'Onboard a new customer (provisions its Boomi environment in production).'],
     ['POST', '/api/tenants/{tenant}/connections', 'Add a source connection from the catalogue.'], ['PUT', '/api/tenants/{tenant}/connections/{id}', 'Update settings, mapping and PII policy.'],
     ['POST', '/api/tenants/{tenant}/connections/{id}/preview', 'Preview fields and mapped documents through Boomi.'], ['POST', '/api/tenants/{tenant}/connections/{id}/run', 'Run the Boomi ingestion and index the chunks.'],
@@ -515,7 +517,7 @@ RENDER.architecture = () => {
     <div class="card"><h2>Reference architecture - sovereign, hybrid, embedded</h2>
       <div class="arch">
         <div class="zone"><h3>Customer systems (per tenant)</h3>
-          <div class="box"><b>SAP S/4HANA / ECC</b>Product master, plant maintenance, finance</div>
+          <div class="box"><b>SAP S/4HANA / ECC</b>Product master, sales orders, plant maintenance, finance</div>
           <div class="box"><b>Salesforce</b>Service cases, accounts, contacts</div>
           <div class="box"><b>Files and SFTP</b>CSV and Excel exports from legacy systems (SIS, CMMS, HIS)</div>
           <div class="box"><b>Government and open data APIs</b>data.gov.my, agency REST and SOAP services</div>

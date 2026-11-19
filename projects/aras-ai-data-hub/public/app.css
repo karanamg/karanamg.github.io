@@ -59,7 +59,7 @@ label.f { display: block; font-size: 12px; color: var(--ink-2); margin: 8px 0 3p
 
 /* system tags */
 .sys { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px; white-space: nowrap; border: 1px solid transparent; }
-.sys.SAP_S4HANA { background: var(--sap-bg); color: var(--sap); border-color: #b9d3f1; } .sys.SALESFORCE { background: var(--sf-bg); color: var(--sf); border-color: #b5ddf3; }
+.sys.SAP_S4HANA, .sys.SAP_SALES_ORDERS { background: var(--sap-bg); color: var(--sap); border-color: #b9d3f1; } .sys.SALESFORCE { background: var(--sf-bg); color: var(--sf); border-color: #b5ddf3; }
 .sys.FILE_CSV { background: var(--file-bg); color: var(--file); border-color: #d1d5db; } .sys.OPEN_DATA { background: var(--od-bg); color: var(--od); border-color: #b7dfc6; }
 .live { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
 .live.Live { background: #e8f6e8; color: var(--good-ink); } .live.Simulated { background: #f1f5f9; color: var(--ink-2); font-style: italic; }
