@@ -189,3 +189,4 @@ table.lin-map td.arrow { color: #94a3b8; font-weight: 700; text-align: center; w
 table.lin-map tr.grp td { background: #f6f8fa; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; color: var(--ink-2); font-weight: 600; padding: 5px 8px; }
 .chip.off { padding: 3px 10px; background: #f1f5f9; color: var(--ink-2); text-decoration: line-through; text-decoration-color: #94a3b8; }
 table.t tr.click { cursor: pointer; } table.t tr.click:hover td { background: #f3fbfa; }
+table.runsteps td.boomi-w { color: #1d4ed8; font-weight: 600; white-space: nowrap; } table.runsteps td.ai-w { color: #7c3aed; font-weight: 600; white-space: nowrap; }

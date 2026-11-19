@@ -532,6 +532,20 @@ RENDER.architecture = () => {
           <div class="box"><b>LLM and RAG services</b>Sovereign LLM answering with citations</div>
           <div class="box"><b>Applications</b>AISLE student wellbeing, maintenance assistant, patient insights</div></div>
       </div></div>
+    <div class="card"><div class="head"><div><h2>What happens when you press Run</h2><div class="muted small">Boomi goes to the customer's system, pulls the latest records, reshapes them the way this customer asked, removes personal data and cuts them into pieces the AI can search. A few seconds, no code per customer.</div></div>
+        <a class="btn ghost sm" href="handout.html" target="_blank" rel="noopener">Printable handout</a></div>
+      <table class="t runsteps"><tr><th>#</th><th>Where</th><th>What happens</th><th>Why it matters</th></tr>
+        ${[
+          ['Integrasi Connect', 'The portal sends one request: customer and data classification, source system and settings, the customer\'s mapping and privacy rules.', 'Each customer is configuration, not a project.'],
+          ['Boomi API Service', 'Boomi receives it on the secure /ingest API.', 'Composable: any Aras product can call the same API.'],
+          ['Boomi · Ingest pipeline', 'Boomi reads the request and keeps the rules for the run.', 'One pipeline serves every customer.'],
+          ['Boomi · Route', 'Picks the connector: SAP S/4HANA, Salesforce, File / CSV or data.gov.my.', 'Add a system once and every customer can use it.'],
+          ['Boomi · Source connector', 'Fetches the latest records. <span class="badge b-neutral">Tab 1 · Data fetched</span>', 'Raw data, visible only in the admin portal.'],
+          ['Boomi · AI data prep', 'Applies the customer\'s mapping: ID, title, content, metadata; unneeded fields are left out. <span class="badge b-neutral">Tab 2 · Mapping applied</span>', 'Mapping changes take effect on the next run, with no redeploy.'],
+          ['Boomi · AI data prep', 'Masks personal data: configured fields plus MyKad, phone and e-mail found in free text.', 'PDPA: the AI platform never receives personal data.'],
+          ['Boomi · AI data prep', 'Chunks documents (~500 characters) with tenant, source and classification labels.', 'RAG-ready: precise retrieval with citations.'],
+          ['Aras AI platform', 'Embeds the chunks into this customer\'s own index. <span class="badge b-neutral">Tab 3 · Sent to the AI platform</span>', 'In production on MTAI GPUs; the demo portal stands in.']
+        ].map(([w, t, y], i) => `<tr><td><b>${i + 1}</b></td><td class="${i === 0 ? 'muted' : i === 8 ? 'ai-w' : 'boomi-w'}">${w}</td><td>${t}</td><td class="muted">${y}</td></tr>`).join('')}</table></div>
     <div class="card"><h2>How the embedded (OEM) model maps to Boomi</h2>
       <table class="t"><tr><th>Integrasi Connect concept</th><th>Boomi capability</th><th>In this demo</th></tr>
         <tr><td><b>Customer (tenant)</b></td><td>One Boomi environment per customer, created with the Platform / Partner API; runtime attached in the customer's data centre or MTAI cloud</td><td>Environment name shown per tenant; one shared Test runtime</td></tr>
