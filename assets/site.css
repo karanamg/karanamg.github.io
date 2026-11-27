@@ -38,4 +38,17 @@ a { color: var(--copper); text-decoration: none; } a:hover { text-decoration: un
 .soon b { color: var(--ink-2); display: block; margin-bottom: 4px; }
 .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 40px; background: #fff; border-radius: var(--r); border: 1px solid var(--line); }
 .foot { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 13px; padding-top: 8px; padding-bottom: 36px; border-top: 1px solid var(--line); }
+/* "How it's built" PDF pop-up */
+dialog.docview { width: min(1100px, 94vw); height: 92vh; max-height: 92vh; padding: 0; border: none; border-radius: var(--r); overflow: hidden; box-shadow: 0 30px 80px rgba(10,20,16,.45); background: #fff; }
+dialog.docview[open] { display: flex; flex-direction: column; }
+dialog.docview::backdrop { background: rgba(14,28,23,.62); backdrop-filter: blur(2px); }
+.dv-bar { display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 18px; background: var(--forest); color: #fff; }
+.dv-title { flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dv-actions { display: flex; align-items: center; gap: 8px; }
+.dv-bar .btn { padding: 6px 11px; font-size: 12.5px; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); color: #fff; }
+.dv-bar .btn:hover { background: rgba(255,255,255,.2); }
+.dv-bar .btn[hidden] { display: none; }
+.dv-x { font: 26px/1 inherit; width: 34px; height: 34px; border: none; border-radius: 8px; background: none; color: #fff; cursor: pointer; }
+.dv-x:hover { background: rgba(255,255,255,.15); }
+.dv-frame { flex: 1; width: 100%; border: 0; background: #525659; }
 @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } .top { margin-bottom: 36px; } .foot { flex-direction: column; } }

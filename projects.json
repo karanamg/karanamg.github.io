@@ -26,7 +26,8 @@
         "JavaScript"
       ],
       "date": "2026-11",
-      "status": "Live (static, no backend)"
+      "status": "Live (static, no backend)",
+      "doc": "projects/platform-message-estimator/how-its-built.pdf"
     },
     {
       "slug": "teras-agent-bridge",
@@ -49,7 +50,8 @@
         "Data governance"
       ],
       "date": "2026-11",
-      "status": "Live demo (Railway gateway, cloud runtime)"
+      "status": "Live demo (Railway gateway, cloud runtime)",
+      "doc": "projects/teras-agent-bridge/how-its-built.pdf"
     },
     {
       "slug": "three-way-match",
@@ -71,7 +73,8 @@
         "Dashboard"
       ],
       "date": "2026-11",
-      "status": "Live demo (Railway gateway)"
+      "status": "Live demo (Railway gateway)",
+      "doc": "projects/three-way-match/how-its-built.pdf"
     },
     {
       "slug": "copperleaf-portal",
@@ -93,7 +96,8 @@
         "Dashboard"
       ],
       "date": "2026-11",
-      "status": "Live demo"
+      "status": "Live demo",
+      "doc": "projects/copperleaf-portal/how-its-built.pdf"
     }
   ]
 }

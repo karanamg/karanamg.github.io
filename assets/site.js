@@ -31,7 +31,7 @@
           <p>${esc(p.summary)}</p>
           ${(p.highlights || []).length ? `<ul>${p.highlights.map((h) => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
           <div class="tags">${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-          <div class="actions"><a class="btn primary" href="${esc(p.path)}">Open demo →</a>${p.source ? `<a class="btn" href="${esc(p.source)}" rel="noopener">How it's built</a>` : ''}</div>
+          <div class="actions"><a class="btn primary" href="${esc(p.path)}">Open demo →</a>${p.doc ? `<a class="btn" href="${esc(p.doc)}" data-doc="${esc(p.slug)}" target="_blank" rel="noopener">How it's built</a>` : p.source ? `<a class="btn" href="${esc(p.source)}" rel="noopener">How it's built</a>` : ''}</div>
         </div>
       </article>`).join('') + (active ? '' : '<div class="card soon"><div><b>More projects on the way</b>New demos are added here as they are built.</div></div>');
     if (!list.length) $('#projects').innerHTML = '<div class="empty">No projects with this tag yet.</div>';
@@ -40,5 +40,33 @@
     const b = e.target.closest('button[data-tag]'); if (!b) return;
     active = b.dataset.tag; history.replaceState(null, '', active ? `?tag=${encodeURIComponent(active)}` : location.pathname); render();
   });
+  // "How it's built" opens the project's PDF in a pop-up viewer.
+  // Phones can't show a PDF inside a page, so there the link opens the PDF directly.
+  const dlg = document.createElement('dialog');
+  dlg.className = 'docview';
+  dlg.innerHTML = `<div class="dv-bar"><b class="dv-title"></b><span class="dv-actions">
+      <a class="btn dv-open" target="_blank" rel="noopener">Open in new tab ↗</a>
+      <a class="btn dv-dl" download>Download PDF</a>
+      <a class="btn dv-src" target="_blank" rel="noopener">Source code ↗</a>
+      <button type="button" class="dv-x" aria-label="Close">×</button></span></div>
+    <iframe class="dv-frame" title="How it's built (PDF)"></iframe>`;
+  document.body.appendChild(dlg);
+  const closeDoc = () => { dlg.close(); dlg.querySelector('.dv-frame').src = 'about:blank'; };
+  dlg.querySelector('.dv-x').onclick = closeDoc;
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) closeDoc(); });          // click outside
+  dlg.addEventListener('cancel', (e) => { e.preventDefault(); closeDoc(); });             // Esc
+  const inlinePdf = () => !matchMedia('(max-width: 700px), (pointer: coarse)').matches && typeof dlg.showModal === 'function';
+  $('#projects').addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-doc]'); if (!a || !inlinePdf()) return;          // fall back to opening the PDF
+    e.preventDefault();
+    const p = projects.find((x) => x.slug === a.dataset.doc); if (!p) return;
+    dlg.querySelector('.dv-title').textContent = `How it's built · ${p.title}`;
+    dlg.querySelector('.dv-open').href = p.doc;
+    dlg.querySelector('.dv-dl').href = p.doc; dlg.querySelector('.dv-dl').setAttribute('download', `${p.slug}-how-its-built.pdf`);
+    const src = dlg.querySelector('.dv-src'); src.hidden = !p.source; if (p.source) src.href = p.source;
+    dlg.querySelector('.dv-frame').src = `${p.doc}#view=FitH&toolbar=1`;
+    dlg.showModal();
+  });
+
   render();
 })();
