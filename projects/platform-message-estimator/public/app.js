@@ -383,7 +383,7 @@ function renderSections(){
     const body = S[sec.key].map(r=>rowHtml(sec,r)).join('');
     const collapsed = S.collapsed['card-'+sec.key] ?? (S[sec.key].length===0 && sec.key!=='integrations');
     return `<div class="card${collapsed?' collapsed':''}${S[sec.key].length?'':' empty'}" id="card-${sec.key}">
-      <div class="card-h" data-toggle><span class="chev">▾</span><h2>${esc(sec.title)}</h2>
+      <div class="card-h" data-toggle><span class="chev">▾</span><h2>${esc(sec.title)}</h2><button class="help-btn" data-guide="${sec.key}" title="How is this calculated? (example)" aria-label="How is ${esc(sec.title)} calculated?">?</button>
         <span class="badge">${esc(rateText(sec.rate))}</span>
         <span class="total" id="tot-${sec.key}"></span></div>
       <div class="card-b">
@@ -636,3 +636,199 @@ function normalize(s){
   catch(e){ S = sampleState(); }
   renderStatic(); update();
 })();
+
+/* ============================================================
+   BUSINESS-USER GUIDES ("?" button on each section)
+   Worked examples are computed live with the section's own calc,
+   so the numbers always match the current assumptions and rates.
+   ============================================================ */
+const GUIDES = {
+  integrations:{
+    plain:'An integration process moves business records, such as orders, invoices or employees, from one system to another. Boomi counts <b>one message every time a document enters or leaves Boomi</b>. That includes the reply a system sends back.',
+    story:'Online orders flow from <b>Shopify</b> into <b>SAP</b>. About <b>120 orders an hour</b>, around the clock. For each order Boomi looks up the SAP customer number and the product price, then creates the sales order. SAP replies with the new order number.',
+    flow:[
+      ['Shopify sends the order to Boomi','1'],
+      ['Boomi asks SAP for the customer number, and SAP answers','2'],
+      ['Boomi asks SAP for the product price, and SAP answers','2'],
+      ['Boomi creates the order in SAP, and SAP replies with the order number','2'],
+    ],
+    flowTotal:'7 messages for every order',
+    fields:[
+      ['Records / run','How many business records (orders, rows, files) each run handles. Real-time processes handle 1 record per run.'],
+      ['Runs · Per','How often the process runs: 120 per hour, once a day, and so on.'],
+      ['Records / doc','1 = every record travels on its own. 100 = records are bundled 100 at a time, which divides the messages by 100.'],
+      ['Source reads','Documents received from the source for each document, usually 1.'],
+      ['Target writes','How many systems each document is sent to.'],
+      ['Req/resp','Tick it if the target sends a reply (an order number, a status). The reply counts too, so each write becomes 2.'],
+      ['Lookups','Extra questions Boomi asks other systems for each document. Each one is a question and an answer, so it counts as 2.'],
+      ['Retry %','Share of documents sent again because of errors.'],
+    ],
+    tips:[
+      '<b>Bundling saves the most.</b> A nightly sync of 25,000 products sent 100 per document needs only about 250 documents a run.',
+      '<b>No reply, no extra message.</b> Untick Req/resp for one-way drops such as SFTP files or queues.',
+      '<b>Lookups inside Boomi are free.</b> Cross-reference tables and document caches don\'t leave Boomi, so set Lookups to 0.',
+      '<b>Subprocesses don\'t count.</b> One Boomi process calling another in the same account is not a message.',
+    ],
+  },
+  edi:{
+    plain:'Trading partners such as retailers, suppliers and logistics firms exchange standard business documents called <b>EDI</b>. Each EDI document received or sent counts, plus the <b>acknowledgement</b> (997) and the document passed to or from your ERP.',
+    story:'<b>12 retailers</b> each send about <b>300 purchase orders a month</b>. Each purchase order is received, an acknowledgement is sent back, and the order is created in the ERP.',
+    flow:[
+      ['Retailer sends the 850 purchase order to Boomi','1'],
+      ['Boomi sends the 997 acknowledgement back to the retailer','1'],
+      ['Boomi creates the order in the ERP','1'],
+    ],
+    flowTotal:'3 messages for every purchase order',
+    fields:[
+      ['Partners','Number of trading partners using this document type.'],
+      ['Transactions / partner','How many of these documents each partner exchanges.'],
+      ['Docs / transaction','Documents per transaction: the EDI document, the acknowledgement, and the ERP write. Add 1 if the ERP sends a reply.'],
+    ],
+    tips:[
+      'Model each document type separately (850 in, 856 out, 810 out), because they have different document counts.',
+      'Outbound documents such as invoices (810) usually count 2: read from the ERP, then sent to the partner.',
+    ],
+  },
+  apis:{
+    plain:'Apps, websites and partners call your APIs through Boomi\'s API gateway. <b>Each call counts as one message.</b>',
+    story:'The <b>mobile app</b> checks order status about <b>6,000 times a day</b>.',
+    flow:[['The app calls the Order Status API through the Boomi gateway','1']],
+    flowTotal:'1 message for every API call',
+    fields:[
+      ['Consumers / apps','How many apps or partners call this API.'],
+      ['Calls / consumer · Per','How often each one calls it.'],
+    ],
+    tips:[
+      'If the API runs a Boomi integration process behind the scenes, add that process under <b>Integration processes</b> too. Its documents are counted separately.',
+      'Use the busiest realistic period, such as peak trading, to set calls per day.',
+    ],
+  },
+  events:{
+    plain:'Systems <b>publish</b> events, such as "order created", to a topic, and other systems <b>subscribe</b> to receive them. The publish counts, and each delivery to a subscriber counts. <b>100 events = 1 message.</b>',
+    story:'About <b>3,000 order events a day</b> are published. The warehouse, the CRM and analytics each subscribe.',
+    flow:[
+      ['The order system publishes the event','1 event'],
+      ['Delivered to the warehouse, CRM and analytics','3 events'],
+    ],
+    flowTotal:'4 events per order, so every 25 orders = 1 message',
+    fields:[
+      ['Events published · Per','How many events are published to the topic.'],
+      ['Subscribers','How many systems receive each event.'],
+    ],
+    tips:['Event volume is converted at 100 events per message, so even high event rates add relatively few messages.'],
+  },
+  flow:{
+    plain:'Flow apps are the screens and workflows people use, such as approvals, forms and portals. <b>Each time someone launches an app counts. 100 launches = 1 message.</b>',
+    story:'<b>60 store managers</b> each start the <b>returns-approval workflow</b> about <b>40 times a month</b>.',
+    flow:[['A manager opens the returns-approval app','1 launch']],
+    flowTotal:'100 launches = 1 message',
+    fields:[
+      ['Users','People who use the app.'],
+      ['Launches / user · Per','How often each person opens or starts it.'],
+    ],
+    tips:['If the app calls Boomi integration processes, for example to look up an order, model those processes under Integration.'],
+  },
+  hub:{
+    plain:'Data Hub keeps one trusted <b>golden record</b> for each customer, product or supplier. It\'s sized by <b>how many golden records you keep</b>: each one is 12 messages a year, which is 1 a month.',
+    story:'The company keeps about <b>150,000 customer</b> golden records.',
+    flow:[['One golden record kept for a year','12'],['Spread across 12 months','1 a month']],
+    flowTotal:'1 message per golden record per month',
+    fields:[['Golden records','How many unique, matched records the hub will hold for this domain.']],
+    tips:['Count unique golden records, not the source records: 3 systems holding the same customer is still 1 golden record.','The integrations that sync records to and from the hub are modelled under Integration.'],
+  },
+  bdi:{
+    plain:'Data Integration (formerly Rivery) copies data into a data warehouse or lake. Its usage is measured in <b>BDUs</b> (Boomi Data Units), taken from the data-pipeline sizing. <b>1 BDU = 50 messages.</b>',
+    story:'Loading SAP and Shopify data into Snowflake is expected to use about <b>30 BDUs a month</b>.',
+    flow:[['One BDU of pipeline usage','50']],
+    flowTotal:'50 messages per BDU',
+    fields:[['BDUs · Per','Expected BDU usage from the data-pipeline sizing.']],
+    tips:['If you don\'t know the BDUs yet, leave this section empty and note it as an open item.'],
+  },
+  ai:{
+    plain:'AI agents answer questions or carry out tasks. <b>Each prompt (one question or turn) sent to an agent counts as 100 messages.</b>',
+    story:'An <b>order-status assistant</b> handles about <b>40 conversations a day</b>, with about <b>3 prompts</b> in each.',
+    flow:[['A customer asks the agent a question','1 prompt = 100'],['A follow-up question in the same chat','1 prompt = 100']],
+    flowTotal:'100 messages per prompt',
+    fields:[
+      ['Conversations · Per','How many chats or tasks the agent handles.'],
+      ['Prompts / conv.','Average number of questions or turns per chat.'],
+    ],
+    tips:['If the agent calls Boomi processes as tools, for example to look up an order, those documents are counted under Integration too.'],
+  },
+};
+
+function guideHtml(key){
+  if(key==='settings') return settingsGuideHtml();
+  const sec = SECTIONS.find(s=>s.key===key), g = GUIDES[key];
+  const row = {...defaultsFor(sec), ...sec.sample[0]};
+  const c = sec.calc(row);
+  const inputs = sec.fields.filter(f=>f.k!=='name').map(f=>{
+    let v=row[f.k]; if(f.type==='period') v=PERIOD_OPTS[v]; else if(f.type==='select') v=f.opts[v]; else if(f.type==='check') v=v?'Yes':'No'; else if(f.type==='num') v=fx(v);
+    return `<tr><td>${esc(f.label)}</td><td class="r">${esc(v)}</td></tr>`;
+  }).join('');
+  return `
+    <h2>${esc(sec.title)}: how it's calculated</h2>
+    <p class="g-plain">${g.plain}</p>
+    <h3>Example: ${esc(row.name)}</h3>
+    <p>${g.story}</p>
+    <div class="g-flow">${g.flow.map((f,i)=>`<div class="g-step"><span class="g-n">${i+1}</span><span class="g-t">${f[0]}</span><span class="g-c">${f[1]}</span></div>`).join('')}
+      <div class="g-step g-total"><span class="g-n">=</span><span class="g-t">${g.flowTotal}</span></div></div>
+    <div class="g-cols">
+      <div><h3>What you would enter</h3><table class="g-tbl">${inputs}</table></div>
+      <div><h3>What the tool calculates</h3><div class="g-calc">${c.ex.map(l=>`<div>${l}</div>`).join('')}</div>
+        <div class="g-result">≈ <b>${fmt(c.msgs)}</b> messages per month</div></div>
+    </div>
+    <h3>What each input means</h3>
+    <table class="g-tbl g-fields">${g.fields.map(([a,b])=>`<tr><td>${esc(a)}</td><td>${b}</td></tr>`).join('')}</table>
+    <h3>Tips</h3><ul class="g-tips">${g.tips.map(t=>`<li>${t}</li>`).join('')}</ul>
+    <p class="g-note">The example uses the current sizing assumptions (${fx(n(S.settings.daysPerMonth),1)} active days per month) and conversion rates. These are estimates, not an official Boomi document.</p>
+    <div class="g-actions"><button class="btn" data-addexample="${key}">Add this example to my estimate</button><button class="btn primary-btn" data-closeguide>Got it</button></div>`;
+}
+
+function settingsGuideHtml(){
+  const R = compute(), st = S.settings;
+  const np = n(st.nonProdPct), g = n(st.growthPct), h = n(st.headroomPct);
+  const y1 = R.proj[0], y2 = R.proj[1];
+  return `
+    <h2>Sizing assumptions: how they're applied</h2>
+    <p class="g-plain">The workload sections give <b>production messages per month</b>. These settings turn that into the yearly figure the AE takes to the customer.</p>
+    <div class="g-flow">
+      <div class="g-step"><span class="g-n">1</span><span class="g-t"><b>Production</b>: total of all workload sections</span><span class="g-c">${fmt(R.prod)} / mo</span></div>
+      <div class="g-step"><span class="g-n">2</span><span class="g-t"><b>+ Non-prod ${fx(np)}%</b>: test and dev runs, which may count like production</span><span class="g-c">${fmt(R.monthly)} / mo</span></div>
+      <div class="g-step"><span class="g-n">3</span><span class="g-t"><b>× 12 months</b> = Year 1</span><span class="g-c">${fmt(y1?.base||0)} / yr</span></div>
+      <div class="g-step"><span class="g-n">4</span><span class="g-t"><b>+ Headroom ${fx(h)}%</b>: peaks, retries, new interfaces</span><span class="g-c">${fmt(y1?.withH||0)} / yr</span></div>
+      ${y2?`<div class="g-step"><span class="g-n">5</span><span class="g-t"><b>+ Growth ${fx(g)}% per year</b>: Year 2 = Year 1 × ${fx(1+g/100,2)}, and so on</span><span class="g-c">${fmt(y2.withH)} / yr</span></div>`:''}
+    </div>
+    <h3>What each setting means</h3>
+    <table class="g-tbl g-fields">
+      <tr><td>Active days per month</td><td>Days the business runs. 30.4 = every day (online shops, 24×7 plants). 21.7 = weekdays only (office back-office processes).</td></tr>
+      <tr><td>Non-prod usage %</td><td>Extra volume from testing in test and dev environments. 10–20% is typical while projects are active. Set it to 0 if the customer's contract excludes non-production usage.</td></tr>
+      <tr><td>Annual growth %</td><td>Expected growth in business volume (orders, customers, partners) each year.</td></tr>
+      <tr><td>Safety headroom %</td><td>A buffer for seasonal peaks, error retries and new interfaces added during the year.</td></tr>
+      <tr><td>Contract term</td><td>How many years to project.</td></tr>
+    </table>
+    <p class="g-note">The numbers above use the current estimate. These are estimates, not an official Boomi document.</p>
+    <div class="g-actions"><button class="btn primary-btn" data-closeguide>Got it</button></div>`;
+}
+
+function openGuide(key){
+  const d = document.getElementById('guide');
+  document.getElementById('guideBody').innerHTML = guideHtml(key);
+  d.showModal(); d.querySelector('.guide-scroll').scrollTop = 0;
+}
+document.addEventListener('click', e=>{
+  const t = e.target;
+  const hb = t.closest('[data-guide]');
+  if(hb){ e.stopPropagation(); e.preventDefault(); openGuide(hb.dataset.guide); return; }
+  if(t.closest('[data-closeguide]')){ document.getElementById('guide').close(); return; }
+  if(t.id==='guide'){ t.close(); return; }  // backdrop click
+  if(t.dataset.addexample){
+    const sec = SECTIONS.find(s=>s.key===t.dataset.addexample);
+    S[sec.key].push({...defaultsFor(sec), ...sec.sample[0], id:uid()});
+    S.collapsed['card-'+sec.key] = false;
+    renderSections(); update();
+    document.getElementById('guide').close();
+    document.getElementById('card-'+sec.key).scrollIntoView({behavior:'smooth', block:'start'});
+    toast('Example added. Adjust the numbers to fit your customer.');
+  }
+}, true);

@@ -158,6 +158,42 @@ ul.reasons li{margin:2px 0}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f1e36;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;z-index:60;pointer-events:none}
 .toast.show{opacity:1}
 
+
+/* help button + guide dialog */
+.help-btn{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid var(--brand-2);background:var(--accent-bg);color:var(--brand-2);font-weight:800;font-size:12.5px;line-height:1;cursor:pointer;padding:0}
+.help-btn:hover{background:var(--brand-2);color:#fff}
+dialog.guide{border:none;border-radius:14px;padding:0;width:min(860px,94vw);max-height:90vh;background:var(--surface-1);color:var(--text-primary);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog.guide::backdrop{background:rgba(10,20,40,.55)}
+.guide-scroll{max-height:90vh;overflow:auto;padding:24px 28px 22px;position:relative}
+.guide-x{position:absolute;top:12px;right:14px;border:none;background:none;font-size:24px;color:var(--text-muted);cursor:pointer}
+.guide h2{margin:0 0 8px;font-size:19px;color:var(--brand)}
+.guide h3{margin:18px 0 6px;font-size:13.5px;color:var(--brand)}
+.guide p{margin:6px 0;font-size:13.5px}
+.g-plain{background:var(--accent-bg);border-left:4px solid var(--brand-2);padding:10px 12px;border-radius:6px}
+.g-flow{display:flex;flex-direction:column;gap:6px;margin:10px 0 4px}
+.g-step{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px}
+.g-n{width:22px;height:22px;border-radius:50%;background:var(--brand-2);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.g-c{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.g-total{background:var(--accent-bg);border-color:var(--brand-2);font-weight:700}
+.g-total .g-n{background:var(--brand)}
+.g-cols{display:grid;grid-template-columns:1fr 1.4fr;gap:20px}
+@media (max-width:700px){.g-cols{grid-template-columns:1fr}}
+.g-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.g-tbl td{border-bottom:1px solid var(--grid);padding:5px 6px;vertical-align:top}
+.g-tbl td.r{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.g-fields td:first-child{font-weight:600;white-space:nowrap;width:1%;padding-right:14px}
+.g-calc{background:#0f1e36;color:#e8eef7;border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.6;font-variant-numeric:tabular-nums}
+.g-calc b{color:#9fd0ff}
+.g-result{margin-top:8px;font-size:15px}
+.g-result b{color:var(--brand-2);font-size:18px}
+.g-tips{margin:4px 0;padding-left:18px;font-size:13px}
+.g-tips li{margin:4px 0}
+.g-note{font-size:11.5px!important;color:var(--text-muted)}
+.g-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+.primary-btn{background:var(--brand-2);border-color:var(--brand-2);color:#fff}
+.primary-btn:hover{background:#1a84e8}
+@media print{dialog.guide,.help-btn{display:none!important}}
+
 /* print */
 .print-only{display:none}
 @media print{
@@ -228,7 +264,7 @@ ul.reasons li{margin:2px 0}
 
     <!-- Global assumptions -->
     <div class="card" id="card-settings">
-      <div class="card-h" data-toggle><span class="chev">▾</span><h2>Sizing assumptions</h2><span class="badge">Applies to all services</span></div>
+      <div class="card-h" data-toggle><span class="chev">▾</span><h2>Sizing assumptions</h2><button class="help-btn" data-guide="settings" title="How are these applied? (example)" aria-label="How are sizing assumptions applied?">?</button><span class="badge">Applies to all services</span></div>
       <div class="card-b">
         <div class="fgrid">
           <div class="field"><label>Active days per month</label><input class="in" type="number" min="1" max="31" step="0.1" data-set="daysPerMonth"><div class="hint">30.4 = every day · 21.7 = business days</div></div>
@@ -315,6 +351,7 @@ ul.reasons li{margin:2px 0}
   </aside>
 </main>
 
+<dialog id="guide" class="guide"><div class="guide-scroll"><button class="guide-x" data-closeguide aria-label="Close">×</button><div id="guideBody"></div></div></dialog>
 <div class="tooltip" id="tip"></div>
 <div class="toast" id="toast"></div>
 
