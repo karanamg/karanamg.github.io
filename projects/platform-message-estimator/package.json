@@ -1,0 +1,9 @@
+{
+  "name": "platform-message-estimator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Boomi Platform Message Estimator - presales sizing tool (static app + tiny Node server for Railway)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}
