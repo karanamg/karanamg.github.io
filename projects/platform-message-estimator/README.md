@@ -36,4 +36,17 @@ In Connections mode you list each endpoint (system + credentials) with its conne
 
 The recommendation is the smallest edition whose included Standard prod/test connections cover the end-of-term need (Integration editions page: Base 2/–, Professional 5/5, Professional Plus 7/7, Enterprise 10/20 + 1/2 Enterprise, Enterprise Plus 15/30 + 2/4 Enterprise; Personal Edition is a trial and is excluded). It is also raised by the Platform fit ticks, and it lists the additional licences required. Inclusions are editable under "Edition inclusions". Classes for connectors not named in Boomi's docs default to Standard and should be verified.
 
+## Platform fit: auto-ticks and warnings
+- **Connections mode:** capabilities implied by the connection inventory are ticked and locked automatically:
+  - Enterprise-class connector → Enterprise connectors
+  - trading partner → B2B/EDI
+  - any test runtime → test/dev environments
+  - Web Services Server → expose as APIs
+  - Event Streams → event-driven
+  - Data Hub → master data
+  - Flow Services Server → Flow
+
+  A warning appears if a connector Boomi documents in one class (for example SAP = Enterprise) is set to another, with a one-click fix.
+- **Messages mode:** if interface names mention SAP / S/4 / ECC / Oracle EBS and Enterprise connectors isn't ticked, a warning offers to tick it. (It's only a warning, because Boomi for SAP or a REST/OData API doesn't need an Enterprise licence.)
+
 All inputs auto-save to the browser (localStorage).

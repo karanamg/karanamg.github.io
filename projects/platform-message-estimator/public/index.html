@@ -194,6 +194,20 @@ dialog.guide::backdrop{background:rgba(10,20,40,.55)}
 .primary-btn:hover{background:#1a84e8}
 @media print{dialog.guide,.help-btn{display:none!important}}
 
+/* platform-fit auto ticks + warnings */
+.checks .auto{display:block;font-size:11px;color:var(--brand-2);font-weight:600}
+.checks .auto:empty{display:none}
+.checks label.is-auto{cursor:default}
+.checks label.is-auto input{opacity:.85}
+.fitwarn{display:flex;gap:8px;align-items:center;background:#fff7e0;border:1px solid var(--warning);border-radius:8px;padding:8px 10px;font-size:12.5px;color:#5b4300;margin:0 0 10px}
+.fitwarn>span:first-child{font-size:15px}
+.fitwarn>span:nth-child(2){flex:1}
+.fitwarn .btn{white-space:nowrap;flex:none}
+:root[data-theme="dark"] .fitwarn{background:#2e2610;color:#f3d98b}
+ul.reasons li.warn{color:#8a5d00;list-style:none;margin-left:-18px}
+:root[data-theme="dark"] ul.reasons li.warn{color:#f3c04b}
+@media print{.fitwarn .btn{display:none}}
+
 /* sizing-model switch */
 .mode-switch{display:flex;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:2px;gap:2px}
 .mode-switch .ms-lbl{font-size:11px;opacity:.7;align-self:center;padding:0 6px 0 8px;text-transform:uppercase;letter-spacing:.4px}
@@ -314,7 +328,8 @@ table.rows tr.exempt input.in.txt{color:var(--text-secondary)}
     <div class="card" id="card-fit">
       <div class="card-h" data-toggle><span class="chev">▾</span><h2>Platform fit: capability requirements</h2><span class="badge">Drives edition recommendation</span></div>
       <div class="card-b">
-        <p class="help">Tick what the customer needs. The minimum Integration edition comes from the highest capability ticked. The capability-to-edition mapping follows Boomi's public edition comparison and is editable in <code>FIT_RULES</code>.</p>
+        <p class="help">Tick what the customer needs. In Connections mode, items implied by the connection inventory are ticked automatically (for example an SAP connector ticks Enterprise connectors). To clear one, change or remove that connection. The minimum Integration edition comes from the highest capability ticked. The capability-to-edition mapping follows Boomi's public edition comparison and is editable in <code>FIT_RULES</code>.</p>
+        <div id="fitWarn"></div>
         <div class="checks" id="fitChecks"></div>
       </div>
     </div>

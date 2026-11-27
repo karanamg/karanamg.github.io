@@ -35,7 +35,7 @@ const FIT_RULES = [
   {k:'nonProdEnv',   label:'Needs test / dev environments', lvl:1, note:'Professional+'},
   {k:'cloudRuntime', label:'Boomi-hosted public cloud runtime', lvl:1, note:'Professional+'},
   {k:'orchestration',label:'Advanced integrations / process orchestration', lvl:1, note:'Professional+'},
-  {k:'entConnectors',label:'Enterprise connectors (SAP, Oracle EBS, Workday…)', lvl:1, note:'Professional+ · extra cost'},
+  {k:'entConnectors',label:'Enterprise connectors (SAP, Oracle E-Business Suite)', lvl:1, note:'Professional+ · extra cost'},
   {k:'apiEnable',    label:'Expose integrations as APIs / web services', lvl:2, note:'Professional Plus+'},
   {k:'moreConns',    label:'High number of connections', lvl:2, note:'Professional Plus+'},
   {k:'ha',           label:'High availability / clustered runtime', lvl:3, note:'Enterprise+'},
@@ -500,9 +500,9 @@ function compute(){
 function recommend(R){
   let lvl = 0; const reasons = [];
   FIT_RULES.forEach(rule=>{
-    if(S.fit[rule.k] && rule.lvl!==undefined && rule.lvl>0){
+    if(effFit(rule.k) && rule.lvl!==undefined && rule.lvl>0){
       if(rule.lvl>lvl) lvl = rule.lvl;
-      reasons.push({lvl:rule.lvl, text:`${rule.label} → ${EDITIONS[rule.lvl]}+`});
+      reasons.push({lvl:rule.lvl, text:`${rule.label}${DERIVED[rule.k]&&!S.fit[rule.k]?' (from connection inventory)':''} → ${EDITIONS[rule.lvl]}+`});
     }
   });
   reasons.sort((a,b)=>b.lvl-a.lvl);
@@ -511,7 +511,7 @@ function recommend(R){
   const services = new Map([['Integration', R.svc[0].msgs>0 || true]]);
   SECTIONS.slice(1).forEach(sec=>{
     const used = R.svc.find(s=>s.sec.key===sec.key).msgs>0;
-    const ticked = sec.fit && S.fit[sec.fit];
+    const ticked = sec.fit && effFit(sec.fit);
     services.set(sec.service, !!(used||ticked));
   });
   // band
@@ -588,7 +588,64 @@ function renderBands(){
 
 function renderFit(){
   document.getElementById('fitChecks').innerHTML = FIT_RULES.map(r=>
-    `<label><input type="checkbox" data-fit="${r.k}"${S.fit[r.k]?' checked':''}><span>${esc(r.label)}<span class="lvl">${esc(r.note)}</span></span></label>`).join('');
+    `<label data-fitlbl="${r.k}"><input type="checkbox" data-fit="${r.k}"${S.fit[r.k]?' checked':''}><span>${esc(r.label)}<span class="lvl">${esc(r.note)}</span><span class="auto" data-fitauto="${r.k}"></span></span></label>`).join('');
+}
+
+/* ---------- Platform fit: auto-ticks from the connection inventory + consistency warnings ---------- */
+/* connection inventory → capability it implies (connections mode only) */
+const CONN_FIT = [
+  {k:'entConnectors', test:r=>r.cls==='ent', why:'Enterprise-class connector'},
+  {k:'b2b',           test:r=>r.cls==='tp' || r.connector==='tp', why:'trading partner'},
+  {k:'nonProdEnv',    test:r=>r.cls!=='exempt' && n(r.testRt)>0, why:'deployed to a test runtime'},
+  {k:'apiEnable',     test:r=>r.connector==='wss', why:'Web Services Server listener'},
+  {k:'events',        test:r=>r.connector==='events', why:'Event Streams connector'},
+  {k:'mdm',           test:r=>r.connector==='datahub', why:'Data Hub connector'},
+  {k:'apps',          test:r=>r.connector==='fss', why:'Flow Services Server connector'},
+];
+function derivedFit(){
+  const d = {};
+  if(S.mode!=='connections') return d;
+  CONN_FIT.forEach(rule=>{
+    const hits = S.conns.filter(r=>n(r.qty)>0 && rule.test(r)).map(r=>r.name||CONN_CATALOG[r.connector]?.label);
+    if(hits.length) d[rule.k] = {why:rule.why, names:hits};
+  });
+  return d;
+}
+let DERIVED = {};
+function effFit(k){ return !!(S.fit[k] || DERIVED[k]); }
+
+const ENT_RX = /\bSAP\b|S\/4|\bECC\b|Oracle\s*(E-?Business|EBS)|\bEBS\b/i;
+function fitWarnings(){
+  const w = [];
+  if(S.mode==='connections'){
+    S.conns.forEach(r=>{
+      const cat = CONN_CATALOG[r.connector];
+      if(cat && cat.v && cat.cls!==r.cls && r.cls!=='exempt')
+        w.push({text:`"${r.name}" uses the ${cat.label} connector but is set to the ${CONN_CLASSES[r.cls]?.label} class. Boomi documents it as ${CONN_CLASSES[cat.cls].label}.`, fix:{row:r.id, cls:cat.cls}, fixLabel:`Set to ${CONN_CLASSES[cat.cls].label}`});
+      else if(r.cls==='std' && ENT_RX.test(r.name||'') && !['sap4','sap','oracleebs'].includes(r.connector))
+        w.push({text:`"${r.name}" looks like an SAP / Oracle EBS system but uses a Standard connector (${cat?.label||r.connector}). That's fine for REST/OData APIs. If it will use the SAP or Oracle EBS connector, switch it to keep it Enterprise class.`});
+    });
+  } else if(!S.fit.entConnectors){
+    const hits = [...S.integrations, ...S.edi].filter(r=>ENT_RX.test(r.name||'')).map(r=>r.name);
+    if(hits.length) w.push({text:`${hits.length} interface${hits.length>1?'s':''} mention SAP or Oracle EBS (${hits.slice(0,2).map(h=>`"${h}"`).join(', ')}${hits.length>2?'…':''}). SAP and Oracle E-Business connectors are Enterprise class, available from Professional at extra cost. Tick "Enterprise connectors" unless it uses Boomi for SAP or a plain REST/OData API.`, fit:'entConnectors', fixLabel:'Tick Enterprise connectors'});
+  }
+  return w;
+}
+function refreshFit(){
+  DERIVED = derivedFit();
+  FIT_RULES.forEach(r=>{
+    const cb = document.querySelector(`input[data-fit="${r.k}"]`); if(!cb) return;
+    const d = DERIVED[r.k];
+    cb.checked = !!(S.fit[r.k] || d); cb.disabled = !!d;
+    const a = document.querySelector(`[data-fitauto="${r.k}"]`);
+    a.textContent = d ? `Auto-ticked from connection inventory: ${d.names.slice(0,3).join(', ')}${d.names.length>3?` +${d.names.length-3} more`:''} (${d.why})` : '';
+    cb.closest('label').classList.toggle('is-auto', !!d);
+  });
+  const W = fitWarnings();
+  const box = document.getElementById('fitWarn');
+  box.innerHTML = W.map((x,i)=>`<div class="fitwarn"><span>⚠</span><span>${esc(x.text)}</span>${x.fixLabel?`<button class="btn" data-fitfix="${i}">${esc(x.fixLabel)}</button>`:''}</div>`).join('');
+  box._w = W;
+  return W;
 }
 
 function renderStatic(){
@@ -604,6 +661,7 @@ function renderStatic(){
    RENDER: outputs (cheap, runs on every input)
    ============================================================ */
 function update(){
+  DERIVED = derivedFit();
   const R = compute();
   // per-row calc cells + section totals
   R.svc.forEach(s=>{
@@ -660,7 +718,9 @@ function update(){
   // recommendation
   const rec = recommend(R);
   document.getElementById('edBar').innerHTML = EDITIONS.map((e,i)=>`<div class="${i===rec.lvl?'rec':i>rec.lvl?'':'on'}">${esc(e)}</div>`).join('');
-  document.getElementById('edReasons').innerHTML = rec.reasons.map(r=>`<li>${esc(r.text)}</li>`).join('');
+  const FW = refreshFit();
+  const warnLi = FW.map(x=>`<li class="warn">⚠ ${esc(x.text)}</li>`).join('');
+  document.getElementById('edReasons').innerHTML = warnLi + rec.reasons.map(r=>`<li>${esc(r.text)}</li>`).join('');
   document.getElementById('svcChips').innerHTML = [...rec.services].map(([name,on])=>`<span class="chip${on?' on':''}">${on?'✓ ':''}${esc(name)}</span>`).join('');
   document.getElementById('bandOut').textContent = rec.band ? `${rec.band.name}: ${fmt(rec.y1)} msgs / yr` : 'No bands defined';
 
@@ -750,7 +810,8 @@ function updateConns(R){
   const fitLvl = recommend(R).lvl;
   const rec = connRecommend(C, fitLvl);
   document.getElementById('cEdBar').innerHTML = EDITIONS.map((ed,i)=>`<div class="${i===rec.lvl?'rec':i>rec.lvl?'':'on'}">${esc(ed)}</div>`).join('');
-  document.getElementById('cEdReasons').innerHTML = rec.reasons.map(r=>`<li>${esc(r.text)}</li>`).join('');
+  const FW = fitWarnings();
+  document.getElementById('cEdReasons').innerHTML = FW.map(x=>`<li class="warn">⚠ ${esc(x.text)}</li>`).join('') + rec.reasons.map(r=>`<li>${esc(r.text)}</li>`).join('');
   setText('cCovTitle', `${EDITIONS[rec.lvl]} Edition: connection licences included vs required (end of term)`);
   const covRows = rec.cov.filter(c=>c.req||c.incl);
   document.getElementById('cCovTbl').innerHTML = `<thead><tr><th><span class="tip" title="Connector licence class (Standard / Enterprise / Small Business / Trading Partner), not the edition">Connector class licence</span></th><th class="r">Required</th><th class="r">Included</th><th class="r">Additional</th></tr></thead><tbody>
@@ -770,7 +831,7 @@ document.addEventListener('input', e=>{
   if(el.dataset.set){ S.settings[el.dataset.set] = el.value; return update(); }
   if(el.dataset.rate){ S.rates[el.dataset.rate] = el.value; return update(); }
   if(el.dataset.band!==undefined){ const b=S.bands[+el.dataset.band]; b[el.dataset.bf] = el.dataset.bf==='upTo' ? (el.value===''?null:el.value) : el.value; return update(); }
-  if(el.dataset.fit){ S.fit[el.dataset.fit] = el.checked; return update(); }
+  if(el.dataset.fit){ if(el.disabled) return; S.fit[el.dataset.fit] = el.checked; return update(); }
   if(el.dataset.edinc!==undefined){ S.edInc[+el.dataset.edinc][el.dataset.ek] = el.value; return update(); }
   if(el.dataset.f){
     const tr = el.closest('tr'); const key = el.closest('table').dataset.sec;
@@ -800,6 +861,12 @@ document.addEventListener('click', e=>{
   if(t.dataset.del){
     const tr = t.closest('tr'); const key = t.closest('table').dataset.sec;
     S[key] = S[key].filter(r=>r.id!==t.dataset.del); tr.remove(); return update();
+  }
+  if(t.dataset.fitfix!==undefined){
+    const x = document.getElementById('fitWarn')._w?.[+t.dataset.fitfix]; if(!x) return;
+    if(x.fit){ S.fit[x.fit] = true; toast('Enterprise connectors ticked'); }
+    if(x.fix){ const r = S.conns.find(c=>c.id===x.fix.row); if(r){ r.cls = x.fix.cls; const sel=document.querySelector(`#connTbl tr[data-id="${r.id}"] select[data-f="cls"]`); if(sel) sel.value=r.cls; toast('Class updated'); } }
+    return update();
   }
   const mb = t.closest('[data-mode]');
   if(mb){ setMode(mb.dataset.mode); update(); toast(mb.dataset.mode==='connections'?'Connection-based sizing':'Platform-message sizing'); return; }
