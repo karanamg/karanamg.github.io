@@ -181,7 +181,12 @@ async function handle(req, res) {
   if (p === '/api/history' && req.method === 'GET') return sendJson(res, 200, history.map(summary));
   let m = p.match(/^\/api\/history\/([\w-]+)$/);
   if (m && req.method === 'GET') { const h = history.find((x) => x.id === m[1]); return h ? sendJson(res, 200, h) : sendJson(res, 404, { error: 'Run not found' }); }
-  if (p === '/api/history/reset' && req.method === 'POST') { history = []; saveHistory(); return sendJson(res, 200, { ok: true }); }
+  if (p === '/api/history/reset' && req.method === 'POST') {   // "Reset demo": clear runs and uploaded PDFs
+    const cleared = history.length; history = []; saveHistory();
+    let files = 0;
+    for (const f of fs.readdirSync(UPLOADS)) { if (/^[0-9a-f-]{36}\.pdf$/.test(f)) { try { fs.unlinkSync(path.join(UPLOADS, f)); files++; } catch {} } }
+    return sendJson(res, 200, { ok: true, clearedRuns: cleared, deletedFiles: files });
+  }
 
   m = p.match(/^\/api\/files\/([0-9a-f-]{36})$/);
   if (m && req.method === 'GET') {

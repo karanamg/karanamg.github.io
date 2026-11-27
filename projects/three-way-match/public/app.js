@@ -267,10 +267,30 @@ function coupaPanel(c) {
 /* ---------------- dashboard ---------------- */
 loaders.dashboard = loadDashboard;
 $('#dashRefresh').addEventListener('click', loadDashboard);
-$('#dashReset').addEventListener('click', async () => {
-  if (!confirm('Clear the match history on this gateway?')) return;
-  await api('/api/history/reset', { method: 'POST' }); loadDashboard();
-});
+/* ---------------- reset demo ---------------- */
+// Clears every match run (dashboard KPIs, exceptions, run list) and the uploaded invoice PDFs on the gateway,
+// then puts the Process invoice screen back to its starting state.
+async function resetDemo() {
+  if (busy) { alert('An invoice is still being matched. Try again when it finishes.'); return; }
+  if (!confirm('Reset the demo?\n\nThis clears all matched invoices from the dashboard and deletes the uploaded invoice PDFs. The sample invoices are kept.')) return;
+  const btns = [$('#resetDemo'), $('#dashReset')];
+  btns.forEach((b) => { b.disabled = true; });
+  try {
+    await api('/api/history/reset', { method: 'POST' });
+    resetPipeline(); $('#result').classList.add('hidden'); $('#result').innerHTML = '';
+    $('#runLabel').textContent = 'Waiting for an invoice';
+    if (location.hash.startsWith('#history=')) history.replaceState(null, '', location.pathname);
+    await loadDashboard();
+    flash('Demo reset. The dashboard is empty and ready for a new run.');
+  } catch (e) { alert('Could not reset the demo: ' + e.message); }
+  finally { btns.forEach((b) => { b.disabled = false; }); }
+}
+function flash(msg) {
+  let t = $('#flash'); if (!t) { t = document.createElement('div'); t.id = 'flash'; t.className = 'flash'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show'); clearTimeout(flash.h); flash.h = setTimeout(() => t.classList.remove('show'), 2800);
+}
+$('#dashReset').addEventListener('click', resetDemo);
+$('#resetDemo').addEventListener('click', resetDemo);
 async function loadDashboard() {
   let runs = [];
   try { runs = await api('/api/history'); } catch (e) { $('#kpis').innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return; }
