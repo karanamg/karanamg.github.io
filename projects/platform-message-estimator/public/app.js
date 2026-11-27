@@ -851,7 +851,7 @@ function normalize(s){
 
 /* boot */
 (function init(){
-  const th = localStorage.getItem(STORAGE_KEY+'-theme') || (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const th = localStorage.getItem(STORAGE_KEY+'-theme') || 'dark';  // dark by default; the ◐ toggle choice is remembered
   document.documentElement.dataset.theme = th;
   try{ const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); if(saved) S = normalize(saved); else S = sampleState(); }
   catch(e){ S = sampleState(); }
