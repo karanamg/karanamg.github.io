@@ -24,11 +24,14 @@ const DEFAULT_BANDS = [
 
 const DEFAULT_SETTINGS = {daysPerMonth:30.4, nonProdPct:15, growthPct:20, headroomPct:20, years:3};
 
-const EDITIONS = ['Standard','Professional','Professional Plus','Enterprise','Enterprise Plus'];
+/* Edition names as in Boomi Help › Integration editions. Personal Edition (30-day trial) is left out
+   because it can't deploy or schedule processes. boomi.com/pricing labels the first column
+   "Standard features"; that is the feature baseline, not an edition name. */
+const EDITIONS = ['Base','Professional','Professional Plus','Enterprise','Enterprise Plus'];
 
 /* capability → minimum edition (index into EDITIONS) or platform service */
 const FIT_RULES = [
-  {k:'prodOnly',     label:'Production deployment only is acceptable', lvl:0, note:'Standard'},
+  {k:'prodOnly',     label:'Production deployment only is acceptable', lvl:0, note:'Base'},
   {k:'nonProdEnv',   label:'Needs test / dev environments', lvl:1, note:'Professional+'},
   {k:'cloudRuntime', label:'Boomi-hosted public cloud runtime', lvl:1, note:'Professional+'},
   {k:'orchestration',label:'Advanced integrations / process orchestration', lvl:1, note:'Professional+'},
@@ -503,7 +506,7 @@ function recommend(R){
     }
   });
   reasons.sort((a,b)=>b.lvl-a.lvl);
-  if(!reasons.length) reasons.push({lvl:0, text:'No advanced capabilities ticked yet. Standard is the starting point.'});
+  if(!reasons.length) reasons.push({lvl:0, text:'No advanced capabilities ticked yet. Base is the starting point.'});
   // services in scope: from fit ticks or non-zero usage
   const services = new Map([['Integration', R.svc[0].msgs>0 || true]]);
   SECTIONS.slice(1).forEach(sec=>{
@@ -1124,7 +1127,7 @@ function connGuideHtml(){
       <li><b>Unique, not per use.</b> A connection is identified by its component ID. Reusing it across many processes and operations costs nothing extra.</li>
       <li><b>Per runtime.</b> Each basic runtime, runtime cluster or cloud attachment it's deployed to needs its own licence. A cluster counts once, whatever its node count.</li>
       <li><b>Copies count.</b> Two connection components to the same system (different credentials, or a copied connection) are two licences.</li>
-      <li><b>Test is separate.</b> Connections in test environments use <b>Test</b> licences. The Base/Standard edition is production only.</li>
+      <li><b>Test is separate.</b> Connections in test environments use <b>Test</b> licences. Base Edition is production only.</li>
       <li><b>Classes.</b> Most connectors are <b>Standard</b>. SAP and Oracle E-Business are <b>Enterprise</b>. QuickBooks and Sage 50 are <b>Small Business</b>. Each trading partner component is one <b>Trading Partner</b> licence, however many communication methods it has.</li>
       <li><b>Not licensed.</b> Boomi connectors such as Web Services Server, Event Streams, Data Hub, Flow Services Server, Atom Queue, Boomi MFT, Boomi for SAP and AS2 Shared Server can be deployed an unlimited number of times.</li>
       <li><b>Counted at deployment.</b> Connections in the Build tab don't count until a process using them is deployed.</li>
