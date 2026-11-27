@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integrasi Connect · What happens when you press Run</title>
+<style>
+  @page { size: A4; margin: 11mm 12mm; }
+  * { box-sizing: border-box; }
+  body { font: 10px/1.36 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; background: #f1f5f9; }
+  .page { width: 210mm; min-height: 297mm; margin: 16px auto; background: #fff; padding: 11mm 12mm; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+  @media print { html { zoom: .93; } body { background: #fff; } .page { margin: 0; padding: 0; box-shadow: none; width: auto; min-height: 0; } .noprint { display: none; } }
+  header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #0d9488; padding-bottom: 6px; margin-bottom: 8px; }
+  h1 { font-size: 19px; margin: 0; } .sub { color: #475569; font-size: 11px; }
+  .brand { text-align: right; font-size: 10px; color: #475569; } .brand b { color: #0d9488; font-size: 12px; display: block; }
+  .lead { background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 6px 10px; font-size: 10.8px; margin-bottom: 6px; }
+  h2 { font-size: 12.5px; margin: 10px 0 5px; color: #0f766e; text-transform: uppercase; letter-spacing: .4px; }
+  ol.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 3px; }
+  ol.steps li { display: grid; grid-template-columns: 22px 1fr 1.05fr; gap: 8px; align-items: start; border: 1px solid #e2e8f0; border-radius: 7px; padding: 4px 8px; break-inside: avoid; }
+  .n { width: 20px; height: 20px; border-radius: 50%; background: #0d9488; color: #fff; font-weight: 700; display: grid; place-items: center; font-size: 10.5px; }
+  li.ai .n { background: #7c3aed; } li.portal .n { background: #64748b; }
+  .who { font-size: 8.8px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #1d4ed8; } li.ai .who { color: #7c3aed; } li.portal .who { color: #64748b; }
+  .what b { font-size: 11px; } .why { background: #f8fafc; border-left: 3px solid #0d9488; padding: 2px 7px; color: #334155; font-size: 10px; border-radius: 0 5px 5px 0; }
+  li.ai .why { border-left-color: #7c3aed; }
+  .tab { display: inline-block; background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; border-radius: 4px; padding: 0 4px; font-size: 9px; font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 10px; } td, th { border-bottom: 1px solid #e2e8f0; padding: 3px 5px; text-align: left; vertical-align: top; } th { color: #475569; font-size: 9px; text-transform: uppercase; }
+  .box { border: 1px solid #e2e8f0; border-radius: 7px; padding: 6px 9px; }
+  .box ul { margin: 3px 0 0; padding-left: 15px; } .box li { margin: 1px 0; }
+  .note { font-size: 9.4px; color: #64748b; margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 5px; }
+  .mask { background: #fdeee7; color: #8a3a17; border-radius: 3px; padding: 0 3px; font-weight: 600; }
+  .bar { text-align: center; margin: 12px; } .bar button { font: inherit; font-size: 13px; padding: 7px 16px; border-radius: 8px; border: 1px solid #0d9488; background: #0d9488; color: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="bar noprint"><button onclick="print()">Print / save as PDF</button></div>
+<div class="page">
+  <header>
+    <div><h1>What happens when you press <span style="color:#0d9488">Run</span></h1><div class="sub">Integrasi Connect · AI Data Hub: from a customer's system to RAG-ready AI knowledge</div></div>
+    <div class="brand"><b>Integrasi Connect</b>An Aras Integrasi solution · Powered by Boomi</div>
+  </header>
+
+  <div class="lead"><b>In one sentence:</b> Boomi goes to the customer's system, pulls the latest records, reshapes them the way <i>this</i> customer asked, removes personal data, and cuts them into pieces the AI can search, then hands them to the AI platform. It takes a few seconds, and no code is written per customer: it is all configuration.</div>
+
+  <h2>The 9 steps on screen</h2>
+  <ol class="steps">
+    <li class="portal"><div class="n">1</div><div class="what"><div class="who">Integrasi Connect</div><b>Request leaves the portal</b><br>One request with everything Boomi needs: the customer and its data classification, the source system and settings, the customer's <b>mapping</b> and <b>privacy rules</b>.</div><div class="why">Each customer's setup is stored as data, not code. A new customer is a new configuration, not a new project.</div></li>
+    <li><div class="n">2</div><div class="what"><div class="who">Boomi API Service</div><b>Boomi receives the request</b><br>Arrives at a secure Boomi API (<code>/ingest</code>), which any Aras Integrasi product can call.</div><div class="why">Built once, reused across products: these are the composable APIs.</div></li>
+    <li><div class="n">3</div><div class="what"><div class="who">Boomi · Ingest pipeline</div><b>Read the request</b><br>Boomi keeps the customer, source and rules for the rest of the run.</div><div class="why">One pipeline serves every customer.</div></li>
+    <li><div class="n">4</div><div class="what"><div class="who">Boomi · Route by source system</div><b>Pick the right connector</b><br>SAP S/4HANA (live sandbox) · Salesforce (simulated in the demo) · File / CSV · data.gov.my (live).</div><div class="why">Add a system once, as one new path, and every customer can use it.</div></li>
+    <li><div class="n">5</div><div class="what"><div class="who">Boomi · Source connector</div><b>Fetch the records</b><br>Boomi connects to the source and reads the latest data. <span class="tab">Tab 1 · Data fetched from source</span></div><div class="why">Raw data exactly as it arrived, including personal details, shown only in the admin portal.</div></li>
+    <li><div class="n">6</div><div class="what"><div class="who">Boomi · AI data prep</div><b>Apply the customer's mapping</b><br>Each record becomes an AI document: ID and title from templates, content fields, metadata labels; unneeded fields are left out. <span class="tab">Tab 2 · Mapping applied</span></div><div class="why">Each customer decides what its AI should know. A change in the mapping studio is used on the next run, with no developer and no redeploy.</div></li>
+    <li><div class="n">7</div><div class="what"><div class="who">Boomi · AI data prep</div><b>Mask personal data (PDPA)</b><br>Fields marked sensitive become <span class="mask">[REDACTED]</span>; Boomi also finds <span class="mask">[MYKAD]</span>, <span class="mask">[PHONE]</span> and <span class="mask">[EMAIL]</span> inside free text.</div><div class="why">Happens inside Boomi, before data leaves the integration layer. The AI platform never receives personal data, and the runtime can run in Malaysia or on-premise.</div></li>
+    <li><div class="n">8</div><div class="what"><div class="who">Boomi · AI data prep</div><b>Chunk for RAG</b><br>Documents are cut into overlapping pieces of about 500 characters, each labelled with customer, source, classification and record ID.</div><div class="why">"RAG-ready": the AI finds the right passage and can cite where it came from.</div></li>
+    <li class="ai"><div class="n">9</div><div class="what"><div class="who">Aras AI platform</div><b>Embed and index</b><br>The chunks go into <i>this</i> customer's own search index, and "AI knowledge" answers questions with citations. <span class="tab">Tab 3 · Sent to the AI platform</span></div><div class="why">Not Boomi. In production: the embedding model and vector database on MTAI GPUs. In the demo, the portal stands in.</div></li>
+  </ol>
+
+  <div class="grid2" style="margin-top:9px">
+    <div>
+      <h2 style="margin-top:0">What to point at</h2>
+      <table>
+        <tr><th>On screen</th><th>Say</th></tr>
+        <tr><td>Boomi API Service step (~4-5 s)</td><td>"That's the whole Boomi run: fetch, map, mask and chunk, in one call."</td></tr>
+        <tr><td>Boomi execution ID</td><td>"Every run is recorded and auditable in Boomi."</td></tr>
+        <tr><td>"19 values masked"</td><td>"Personal data was removed before it reached the AI."</td></tr>
+        <tr><td>The three tabs</td><td>"Raw data in, what we did to it, clean AI-ready data out."</td></tr>
+        <tr><td>Run all</td><td>"Three different systems, one pipeline, one click."</td></tr>
+      </table>
+    </div>
+    <div>
+      <h2 style="margin-top:0">Why it matters</h2>
+      <div class="box"><b>CSO · time to revenue</b><ul><li>Onboard a customer by configuration in minutes</li><li>Ready catalogue of enterprise and government connectors</li></ul></div>
+      <div class="box" style="margin-top:4px"><b>CTO · buy vs build</b><ul><li>No custom connector code to maintain</li><li>One pipeline for every tenant; hybrid runtime for regulated customers</li></ul></div>
+      <div class="box" style="margin-top:4px"><b>AI consultant · RAG-ready data</b><ul><li>Clean, mapped, PII-masked, chunked and labelled</li><li>Feeds the vector database and LLM on MTAI GPUs</li></ul></div>
+    </div>
+  </div>
+
+  <div class="note"><b>About the demo:</b> Salesforce data is simulated; SAP S/4HANA (public sandbox) and data.gov.my are live. All demo customers share one Boomi Test environment; in production each customer gets its own Boomi environment. Step 9 runs in the portal as a stand-in for the Aras AI platform. All people and organisations in the demo are fictitious.</div>
+</div>
+</body>
+</html>

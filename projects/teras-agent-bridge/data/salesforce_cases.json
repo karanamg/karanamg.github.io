@@ -1,0 +1,384 @@
+{
+ "totalSize": 18,
+ "done": true,
+ "records": [
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000UNU0001"
+   },
+   "Id": "500Hs0000UNU0001",
+   "CaseNumber": "00018001",
+   "Subject": "Exam stress and trouble sleeping",
+   "Description": "Student reports severe stress before final exams, sleeping about four hours a night and skipping meals. Requested a counselling session. Student IC 030512-10-4471.",
+   "Status": "In Progress",
+   "Priority": "High",
+   "Type": "Counselling",
+   "Origin": "AISLE App",
+   "CreatedDate": "2026-10-02T03:15:00.000+0000",
+   "ContactName__c": "Nur Aisyah binti Rahman",
+   "ContactEmail__c": "aisyah.rahman@student.unus.edu.my",
+   "ContactPhone__c": "+60 12-418 7730",
+   "Tenant__c": "unus",
+   "Faculty__c": "Engineering",
+   "Wellbeing_Category__c": "Academic stress"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000UNU0002"
+   },
+   "Id": "500Hs0000UNU0002",
+   "CaseNumber": "00018002",
+   "Subject": "Financial hardship - unable to pay hostel fees",
+   "Description": "Final year student cannot pay hostel fees after a family member lost their job. Asked about emergency financial aid and part-time work on campus.",
+   "Status": "New",
+   "Priority": "High",
+   "Type": "Financial aid",
+   "Origin": "Walk-in",
+   "CreatedDate": "2026-10-05T06:40:00.000+0000",
+   "ContactName__c": "Lim Wei Jie",
+   "ContactEmail__c": "weijie.lim@student.unus.edu.my",
+   "ContactPhone__c": "+60 16-772 0915",
+   "Tenant__c": "unus",
+   "Faculty__c": "Business",
+   "Wellbeing_Category__c": "Financial"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000UNU0003"
+   },
+   "Id": "500Hs0000UNU0003",
+   "CaseNumber": "00018003",
+   "Subject": "Feeling isolated in first semester",
+   "Description": "First year international student feels lonely and has not joined any clubs. Peer mentor programme suggested. Follow-up booked for next week.",
+   "Status": "In Progress",
+   "Priority": "Medium",
+   "Type": "Counselling",
+   "Origin": "AISLE App",
+   "CreatedDate": "2026-10-07T09:05:00.000+0000",
+   "ContactName__c": "Arjun Nair",
+   "ContactEmail__c": "arjun.nair@student.unus.edu.my",
+   "ContactPhone__c": "+60 11-2391 4478",
+   "Tenant__c": "unus",
+   "Faculty__c": "Computer Science",
+   "Wellbeing_Category__c": "Social"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000UNU0004"
+   },
+   "Id": "500Hs0000UNU0004",
+   "CaseNumber": "00018004",
+   "Subject": "Request for academic accommodation",
+   "Description": "Student with a documented anxiety condition requests extra exam time and a quiet room. Medical letter submitted to the disability services unit.",
+   "Status": "Escalated",
+   "Priority": "Medium",
+   "Type": "Accommodation",
+   "Origin": "Email",
+   "CreatedDate": "2026-10-09T02:30:00.000+0000",
+   "ContactName__c": "Siti Hajar binti Osman",
+   "ContactEmail__c": "sitihajar@student.unus.edu.my",
+   "ContactPhone__c": "+60 13-905 6612",
+   "Tenant__c": "unus",
+   "Faculty__c": "Medicine",
+   "Wellbeing_Category__c": "Mental health"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000UNU0005"
+   },
+   "Id": "500Hs0000UNU0005",
+   "CaseNumber": "00018005",
+   "Subject": "Hostel noise affecting study",
+   "Description": "Several students in Block C report late-night noise affecting study and sleep. Residential college asked to enforce quiet hours.",
+   "Status": "New",
+   "Priority": "Low",
+   "Type": "Facilities",
+   "Origin": "AISLE App",
+   "CreatedDate": "2026-10-11T13:20:00.000+0000",
+   "ContactName__c": "Muhammad Danial",
+   "ContactEmail__c": "danial.m@student.unus.edu.my",
+   "ContactPhone__c": "+60 17-660 2384",
+   "Tenant__c": "unus",
+   "Faculty__c": "Engineering",
+   "Wellbeing_Category__c": "Environment"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000UNU0006"
+   },
+   "Id": "500Hs0000UNU0006",
+   "CaseNumber": "00018006",
+   "Subject": "Burnout from part-time work and studies",
+   "Description": "Student works 25 hours a week at a cafe and is falling behind in coursework. Discussed workload planning and the student hardship fund.",
+   "Status": "Closed",
+   "Priority": "Medium",
+   "Type": "Counselling",
+   "Origin": "Phone",
+   "CreatedDate": "2026-10-14T05:10:00.000+0000",
+   "ContactName__c": "Tan Mei Ling",
+   "ContactEmail__c": "meiling.tan@student.unus.edu.my",
+   "ContactPhone__c": "+60 12-334 8821",
+   "Tenant__c": "unus",
+   "Faculty__c": "Business",
+   "Wellbeing_Category__c": "Academic stress"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000PER0001"
+   },
+   "Id": "500Hs0000PER0001",
+   "CaseNumber": "00018001",
+   "Subject": "Chiller pump overheating at Penang site",
+   "Description": "Customer reports the chiller pump (SAP product 200001066) overheats after six hours of continuous running. Bearing temperature above 90 C. Requested a field engineer.",
+   "Status": "In Progress",
+   "Priority": "High",
+   "Type": "Warranty",
+   "Origin": "Email",
+   "CreatedDate": "2026-10-03T01:45:00.000+0000",
+   "ContactName__c": "Encik Hafiz Kamal",
+   "ContactEmail__c": "hafiz.kamal@penangchem.example.my",
+   "ContactPhone__c": "+60 4-642 1180",
+   "Tenant__c": "perkasa",
+   "Account_Name__c": "Penang Chemicals Sdn Bhd",
+   "Product_Code__c": "200001066"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000PER0002"
+   },
+   "Id": "500Hs0000PER0002",
+   "CaseNumber": "00018002",
+   "Subject": "Fuel pump delivery delayed two weeks",
+   "Description": "Order of 40 fuel pumps (200001073) for the Kuantan depot is two weeks late. Customer asks for a revised delivery date and partial shipment.",
+   "Status": "New",
+   "Priority": "Medium",
+   "Type": "Delivery",
+   "Origin": "Phone",
+   "CreatedDate": "2026-10-06T04:00:00.000+0000",
+   "ContactName__c": "Ms Priya Subramaniam",
+   "ContactEmail__c": "priya.s@kuantanlogistics.example.my",
+   "ContactPhone__c": "+60 9-515 4402",
+   "Tenant__c": "perkasa",
+   "Account_Name__c": "Kuantan Logistics Berhad",
+   "Product_Code__c": "200001073"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000PER0003"
+   },
+   "Id": "500Hs0000PER0003",
+   "CaseNumber": "00018003",
+   "Subject": "Jet pump vibration complaint",
+   "Description": "Jet pump (200001014) shows high vibration after installation. Customer suspects misalignment of the motor coupling. Video evidence attached.",
+   "Status": "Escalated",
+   "Priority": "High",
+   "Type": "Quality",
+   "Origin": "Web",
+   "CreatedDate": "2026-10-08T07:25:00.000+0000",
+   "ContactName__c": "Mr Wong Kar Seng",
+   "ContactEmail__c": "kswong@johorwater.example.my",
+   "ContactPhone__c": "+60 7-338 2209",
+   "Tenant__c": "perkasa",
+   "Account_Name__c": "Johor Water Services",
+   "Product_Code__c": "200001014"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000PER0004"
+   },
+   "Id": "500Hs0000PER0004",
+   "CaseNumber": "00018004",
+   "Subject": "Seal leakage on control system pump",
+   "Description": "Control system pump (200001023) leaking at the mechanical seal within the warranty period. Customer requests replacement seals and an on-site inspection.",
+   "Status": "In Progress",
+   "Priority": "Medium",
+   "Type": "Warranty",
+   "Origin": "Email",
+   "CreatedDate": "2026-10-10T03:50:00.000+0000",
+   "ContactName__c": "Puan Rosnah Yusof",
+   "ContactEmail__c": "rosnah@klpower.example.my",
+   "ContactPhone__c": "+60 3-2287 5561",
+   "Tenant__c": "perkasa",
+   "Account_Name__c": "KL Power Utilities",
+   "Product_Code__c": "200001023"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000PER0005"
+   },
+   "Id": "500Hs0000PER0005",
+   "CaseNumber": "00018005",
+   "Subject": "Request for pump efficiency data",
+   "Description": "Customer preparing an energy audit asks for efficiency curves for the 50m pump (200001022) and the AHP pump (200001016).",
+   "Status": "Closed",
+   "Priority": "Low",
+   "Type": "Information",
+   "Origin": "Web",
+   "CreatedDate": "2026-10-12T08:15:00.000+0000",
+   "ContactName__c": "Dr Lee Chong Wei",
+   "ContactEmail__c": "cwlee@greenbuild.example.my",
+   "ContactPhone__c": "+60 3-7955 1023",
+   "Tenant__c": "perkasa",
+   "Account_Name__c": "GreenBuild Consultants",
+   "Product_Code__c": "200001022"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000PER0006"
+   },
+   "Id": "500Hs0000PER0006",
+   "CaseNumber": "00018006",
+   "Subject": "Repeat failure of chiller pump impeller",
+   "Description": "Second impeller failure on the chiller pump at Shah Alam within three months. Customer considering switching supplier unless root cause is found.",
+   "Status": "Escalated",
+   "Priority": "High",
+   "Type": "Quality",
+   "Origin": "Phone",
+   "CreatedDate": "2026-10-15T02:05:00.000+0000",
+   "ContactName__c": "Encik Azman Ismail",
+   "ContactEmail__c": "azman@shahalamfoods.example.my",
+   "ContactPhone__c": "+60 3-5510 7788",
+   "Tenant__c": "perkasa",
+   "Account_Name__c": "Shah Alam Foods",
+   "Product_Code__c": "200001066"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000SEJ0001"
+   },
+   "Id": "500Hs0000SEJ0001",
+   "CaseNumber": "00018001",
+   "Subject": "Long waiting time at Klang clinic",
+   "Description": "Patient waited more than three hours for a follow-up appointment at the Klang branch. Asked whether online queue tickets are available. Patient IC 780214-08-5523.",
+   "Status": "New",
+   "Priority": "Medium",
+   "Type": "Service",
+   "Origin": "Web",
+   "CreatedDate": "2026-10-02T02:10:00.000+0000",
+   "ContactName__c": "Kumar a/l Rajan",
+   "ContactEmail__c": "kumar.rajan@example.my",
+   "ContactPhone__c": "+60 12-773 0410",
+   "Tenant__c": "sejahtera",
+   "Clinic__c": "Klang",
+   "Department__c": "Outpatient"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000SEJ0002"
+   },
+   "Id": "500Hs0000SEJ0002",
+   "CaseNumber": "00018002",
+   "Subject": "Billing dispute for diabetes screening",
+   "Description": "Patient was charged twice for an HbA1c test. Requests a refund and an itemised bill.",
+   "Status": "In Progress",
+   "Priority": "Medium",
+   "Type": "Billing",
+   "Origin": "Email",
+   "CreatedDate": "2026-10-04T05:30:00.000+0000",
+   "ContactName__c": "Fatimah binti Zakaria",
+   "ContactEmail__c": "fatimah.z@example.my",
+   "ContactPhone__c": "+60 19-221 6634",
+   "Tenant__c": "sejahtera",
+   "Clinic__c": "Petaling Jaya",
+   "Department__c": "Laboratory"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000SEJ0003"
+   },
+   "Id": "500Hs0000SEJ0003",
+   "CaseNumber": "00018003",
+   "Subject": "Question about medication side effects",
+   "Description": "Elderly patient reports dizziness after starting new blood pressure medication. Pharmacist callback requested within 24 hours.",
+   "Status": "Escalated",
+   "Priority": "High",
+   "Type": "Clinical",
+   "Origin": "Phone",
+   "CreatedDate": "2026-10-06T10:45:00.000+0000",
+   "ContactName__c": "Chong Ah Kow",
+   "ContactEmail__c": "ahkow.chong@example.my",
+   "ContactPhone__c": "+60 3-3341 9908",
+   "Tenant__c": "sejahtera",
+   "Clinic__c": "Klang",
+   "Department__c": "Pharmacy"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000SEJ0004"
+   },
+   "Id": "500Hs0000SEJ0004",
+   "CaseNumber": "00018004",
+   "Subject": "Request for medical report for insurance",
+   "Description": "Patient needs a medical report for an insurance claim after a minor surgery. Asked about the fee and turnaround time.",
+   "Status": "Closed",
+   "Priority": "Low",
+   "Type": "Records",
+   "Origin": "Web",
+   "CreatedDate": "2026-10-09T03:00:00.000+0000",
+   "ContactName__c": "Nurul Izzah",
+   "ContactEmail__c": "nurul.izzah@example.my",
+   "ContactPhone__c": "+60 13-480 2257",
+   "Tenant__c": "sejahtera",
+   "Clinic__c": "Shah Alam",
+   "Department__c": "Medical records"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000SEJ0005"
+   },
+   "Id": "500Hs0000SEJ0005",
+   "CaseNumber": "00018005",
+   "Subject": "Praise for the paediatric team",
+   "Description": "Parent thanked the paediatric nurses for their care during a dengue admission and suggested more parking at the Shah Alam branch.",
+   "Status": "Closed",
+   "Priority": "Low",
+   "Type": "Feedback",
+   "Origin": "AISLE App",
+   "CreatedDate": "2026-10-12T06:20:00.000+0000",
+   "ContactName__c": "Rajesh Pillai",
+   "ContactEmail__c": "rajesh.p@example.my",
+   "ContactPhone__c": "+60 16-559 3301",
+   "Tenant__c": "sejahtera",
+   "Clinic__c": "Shah Alam",
+   "Department__c": "Paediatrics"
+  },
+  {
+   "attributes": {
+    "type": "Case",
+    "url": "/services/data/v61.0/sobjects/Case/500Hs0000SEJ0006"
+   },
+   "Id": "500Hs0000SEJ0006",
+   "CaseNumber": "00018006",
+   "Subject": "Difficulty booking teleconsultation",
+   "Description": "Patient could not complete a teleconsultation booking in the mobile app - payment page timed out twice.",
+   "Status": "New",
+   "Priority": "Medium",
+   "Type": "Digital",
+   "Origin": "App",
+   "CreatedDate": "2026-10-14T12:35:00.000+0000",
+   "ContactName__c": "Lee Siew Mei",
+   "ContactEmail__c": "siewmei.lee@example.my",
+   "ContactPhone__c": "+60 17-902 4418",
+   "Tenant__c": "sejahtera",
+   "Clinic__c": "Online",
+   "Department__c": "Telehealth"
+  }
+ ]
+}

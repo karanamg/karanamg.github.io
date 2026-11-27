@@ -1,0 +1,12 @@
+{
+  "agent_name": "JPJ Counter Assistant (Teras)",
+  "agent_id": "ea7e0ff0-3fa0-4deb-9071-6c6e541272a4",
+  "tenant": "jpj",
+  "execute_url": "https://c01-usa-east.ai-agent-garden.boomi.com",
+  "deployment_id": "24bc7738-fa8a-41fb-9f30-1485c5b315b5", "package_id": "dff1ce0e-ffd0-42fc-8ff6-4b22928d81ae",
+  "tools": {
+    "TERAS jpj_vehicle_lookup": "360b315e-9fbf-4e00-955f-a32ed6d742a9",
+    "TERAS jpj_licence_status": "77a597ae-5999-4232-ace8-d9366259b1d5",
+    "TERAS jpj_summons_check": "8f093c67-5896-480f-a13b-704af43baa5c"
+  }
+}

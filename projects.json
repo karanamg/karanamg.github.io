@@ -10,10 +10,10 @@
     {
       "slug": "platform-message-estimator",
       "title": "Boomi Platform Message Estimator (presales sizing tool)",
-      "summary": "A presales calculator that turns workload inputs (integration interfaces, EDI partners, API calls, event topics, Flow apps, Data Hub golden records, ELT pipelines and AI agents) into estimated Boomi Platform Messages per month and per year. It projects volume over the contract term with growth and headroom, and suggests the minimum Integration edition and the platform services in scope for the AE conversation.",
+      "summary": "A presales calculator that turns workload inputs (integration interfaces, EDI partners, API calls, Control Plane APIs, event topics, Flow apps, Data Hub golden records, Data Integration pipelines and AI agents) into estimated Boomi Platform Messages per month and per year. It projects volume over the contract term with growth and headroom so the AE can choose the platform, and has a second mode that counts connection licences by connector class.",
       "highlights": [
-        "Per-row message math with editable conversion rates and volume bands",
-        "Capability checklist maps requirements to the minimum Integration edition",
+        "Per-row message math with hover explanations and editable conversion rates",
+        "Data Integration BDU builder, one-time initial loads, Control Plane and Agentstudio sizing",
         "Save/open scenarios as JSON, export CSV, print a PDF summary; runs fully in the browser"
       ],
       "path": "projects/platform-message-estimator/public/",
@@ -27,6 +27,29 @@
       ],
       "date": "2026-11",
       "status": "Live (static, no backend)"
+    },
+    {
+      "slug": "teras-agent-bridge",
+      "title": "Teras Connect - legacy data to governed AI tools (Boomi OEM demo)",
+      "summary": "A multi-tenant console for Aras Integrasi × MTAI that turns legacy systems into governed AI tools. JPJ's IBM P-Series (IBM i DB2) vehicle, licence and summons data flows through Boomi, which cleanses it, masks personal data by data classification and publishes it as agent tools and RAG knowledge. A switch runs every call on either an on-premise (sovereign) or a Boomi cloud runtime.",
+      "highlights": [
+        "IBM P-Series records reached through Boomi, with cleansing on input and PII governance on output",
+        "Live agent tools (vehicle, licence, summons) and a virtual assistant with cited answers",
+        "On-prem vs cloud runtime switch on every call; tenant onboarding, connection and mapping reuse"
+      ],
+      "path": "projects/teras-agent-bridge/public/",
+      "thumbnail": "projects/teras-agent-bridge/thumbnail.jpg",
+      "source": "https://github.com/karanamg/karanamg.github.io/tree/main/projects/teras-agent-bridge",
+      "tags": [
+        "Boomi",
+        "Embedded / OEM",
+        "IBM i",
+        "AI agents",
+        "RAG",
+        "Data governance"
+      ],
+      "date": "2026-11",
+      "status": "Live demo (Railway gateway, cloud runtime)"
     },
     {
       "slug": "aras-ai-data-hub",

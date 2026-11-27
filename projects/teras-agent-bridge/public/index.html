@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teras Connect · Aras Integrasi × MTAI · powered by Boomi</title>
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="teras.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%230d9488%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2219%22 font-family=%22Arial%22 font-weight=%22700%22 text-anchor=%22middle%22 fill=%22white%22%3ET%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<aside class="side">
+  <div class="logo"><div class="mark">TC</div><div><b>Teras Connect</b><span>Legacy data → governed AI tools</span></div></div>
+  <label class="side-label" for="tenantSel">Customer (tenant)</label>
+  <div class="tenant-pick"><span id="tenantDot" class="dot"></span><select id="tenantSel"></select></div>
+  <button id="newTenant" class="side-new">+ Onboard a new customer</button>
+  <nav id="nav">
+    <div class="nav-grp">Part 1 · Soup-to-nuts</div>
+    <a data-page="overview" class="active"><i>◎</i>Overview</a>
+    <a data-page="connections"><i>⇄</i>Connections</a>
+    <a data-page="mapping"><i>⌗</i>Mapping studio</a>
+    <a data-page="run"><i>▶</i>Run &amp; monitor</a>
+    <a data-page="tools"><i>⚒</i>Agent tools</a>
+    <a data-page="assistant"><i>✦</i>Virtual assistant</a>
+    <div class="nav-grp">Part 3 · Sovereign scaffolding</div>
+    <a data-page="sovereign"><i>⛨</i>Runtimes &amp; security</a>
+  </nav>
+  <div class="side-foot">
+    <div class="powered">Integration engine<br><b>Powered by Boomi</b></div>
+    <div class="by">Teras AI · Aras Integrasi × MTAI</div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="top">
+    <div><h1 id="tenantName">…</h1><div id="tenantMeta" class="meta"></div></div>
+    <div class="top-right">
+      <div class="rt-switch" id="rtSwitch" title="Which Boomi runtime executes every call from this console"></div>
+      <button id="resetDemo" class="btn ghost sm" title="Clear all runs and indexed knowledge and restore the demo tenants">↺ Reset demo</button>
+      <span id="envBadge" class="env"></span>
+    </div>
+  </header>
+
+  <section id="page-overview" class="page active"></section>
+  <section id="page-connections" class="page"></section>
+  <section id="page-mapping" class="page"></section>
+  <section id="page-run" class="page"></section>
+  <section id="page-tools" class="page"></section>
+  <section id="page-assistant" class="page"></section>
+  <section id="page-sovereign" class="page"></section>
+</div>
+
+<div id="modal" class="modal hidden"><div class="modal-card" id="modalCard"></div></div>
+<div id="toast" class="toast hidden"></div>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script src="teras.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+.legacy_token
+.env
+boomi/ids.json
+_v1/
+data/state/

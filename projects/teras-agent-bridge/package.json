@@ -1,0 +1,8 @@
+{
+  "name": "teras-agent-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Teras Agent Bridge - legacy IBM P-Series to governed agent tools with Boomi (Aras Integrasi / MTAI workshop demo)",
+  "engines": { "node": ">=22.15" },
+  "scripts": { "start": "node --use-system-ca server.js" }
+}

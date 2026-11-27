@@ -1,0 +1,620 @@
+{
+ "tenants": [
+  {
+   "id": "jpj",
+   "name": "Jabatan Pengangkutan Jalan (JPJ)",
+   "industry": "Government - road transport",
+   "solution": "MyJPJ virtual assistant",
+   "color": "#b45309",
+   "classification": "Official - Sensitive",
+   "boomiEnvironment": "ARAS-JPJ-PROD",
+   "region": "JPJ data centre, Putrajaya (on-premise runtime)",
+   "runtime": "onprem",
+   "connections": [
+    {
+     "id": "veh",
+     "name": "Vehicle registry - IBM i VEHMST",
+     "type": "IBM_PSERIES",
+     "config": {
+      "file": "VEHMST"
+     },
+     "published": true,
+     "mapping": {
+      "id": "{plate}",
+      "title": "Vehicle {plate}: {make} {model} ({year})",
+      "content": [
+       "road_tax_expiry",
+       "road_tax_valid",
+       "insurance_valid",
+       "status",
+       "blacklisted",
+       "colour"
+      ],
+      "metadata": [
+       {
+        "from": "vehicle_class",
+        "to": "vehicle_class"
+       },
+       {
+        "from": "year",
+        "to": "year"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "owner_ic",
+       "owner_name",
+       "chassis"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "lic",
+     "name": "Driving licences - IBM i LICMST",
+     "type": "IBM_PSERIES",
+     "config": {
+      "file": "LICMST"
+     },
+     "published": true,
+     "mapping": {
+      "id": "LIC-{licence_type}-{expiry}",
+      "title": "{licence_type_desc} expiring {expiry}",
+      "content": [
+       "status",
+       "expiry",
+       "demerit_points",
+       "classes"
+      ],
+      "metadata": [
+       {
+        "from": "licence_type",
+        "to": "licence_type"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "ic",
+       "name",
+       "address",
+       "phone",
+       "date_of_birth"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "sum",
+     "name": "Traffic summons - IBM i SUMMST",
+     "type": "IBM_PSERIES",
+     "config": {
+      "file": "SUMMST"
+     },
+     "published": true,
+     "mapping": {
+      "id": "{summons_no}",
+      "title": "Summons {summons_no}: {offence}",
+      "content": [
+       "offence",
+       "offence_date",
+       "location",
+       "amount_rm",
+       "status"
+      ],
+      "metadata": [
+       {
+        "from": "plate",
+        "to": "plate"
+       },
+       {
+        "from": "offence_code",
+        "to": "offence_code"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "ic"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "csv",
+     "name": "Counter & MyJPJ feedback (CSV)",
+     "type": "FILE_CSV",
+     "config": {
+      "fileName": "jpj_counter_feedback_nov2026.csv"
+     },
+     "mapping": {
+      "id": "{feedback_id}",
+      "title": "Feedback {feedback_id}: {topic}",
+      "content": [
+       "comments",
+       "topic",
+       "branch"
+      ],
+      "metadata": [
+       {
+        "from": "date",
+        "to": "created_at"
+       },
+       {
+        "from": "channel",
+        "to": "channel"
+       },
+       {
+        "from": "branch",
+        "to": "branch"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "customer_name",
+       "mykad",
+       "phone"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    }
+   ],
+   "questions": [
+    "What do customers complain about at JPJ counters?",
+    "Why are people unable to renew road tax?",
+    "Which feedback mentions MyJPJ payments?"
+   ]
+  },
+  {
+   "id": "unus",
+   "name": "Universiti Nusantara",
+   "industry": "Higher education",
+   "solution": "AISLE student wellbeing",
+   "color": "#0f766e",
+   "classification": "Confidential",
+   "boomiEnvironment": "ARAS-UNUS-PROD",
+   "region": "MTAI Sovereign Cloud - Cyberjaya",
+   "connections": [
+    {
+     "id": "sf",
+     "name": "Student services cases",
+     "type": "SALESFORCE",
+     "config": {
+      "object": "Case"
+     },
+     "mapping": {
+      "id": "{CaseNumber}",
+      "title": "Case {CaseNumber}: {Subject}",
+      "content": [
+       "Description",
+       "Status",
+       "Priority",
+       "Type"
+      ],
+      "metadata": [
+       {
+        "from": "CreatedDate",
+        "to": "created_at"
+       },
+       {
+        "from": "Origin",
+        "to": "channel"
+       },
+       {
+        "from": "Faculty__c",
+        "to": "faculty"
+       },
+       {
+        "from": "Wellbeing_Category__c",
+        "to": "category"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "ContactName__c",
+       "ContactEmail__c",
+       "ContactPhone__c"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "csv",
+     "name": "Wellbeing survey (SIS export)",
+     "type": "FILE_CSV",
+     "config": {
+      "fileName": "unus_wellbeing_survey_oct2026.csv"
+     },
+     "mapping": {
+      "id": "{student_id}",
+      "title": "Wellbeing survey - {faculty} year {year}",
+      "content": [
+       "comments",
+       "stress_level",
+       "sleep_hours",
+       "support_requested"
+      ],
+      "metadata": [
+       {
+        "from": "faculty",
+        "to": "faculty"
+       },
+       {
+        "from": "year",
+        "to": "year_of_study"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "full_name",
+       "mykad",
+       "email",
+       "phone"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "opendata",
+     "name": "School enrolment - Selangor (data.gov.my)",
+     "type": "OPEN_DATA",
+     "config": {
+      "dataset": "enrolment_school_district",
+      "filter": "Selangor@state",
+      "sort": "-date",
+      "limit": 12
+     },
+     "mapping": {
+      "id": "{date}-{stage}-{sex}",
+      "title": "Selangor {stage} school enrolment {date} ({sex}, {district})",
+      "content": [
+       "students",
+       "stage",
+       "sex",
+       "district"
+      ],
+      "metadata": [
+       {
+        "from": "state",
+        "to": "state"
+       },
+       {
+        "from": "date",
+        "to": "period"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    }
+   ],
+   "questions": [
+    "Which students asked for counselling because of exam stress?",
+    "What financial hardship issues were reported?",
+    "How many primary school students were enrolled in Selangor?"
+   ],
+   "runtime": "cloud"
+  },
+  {
+   "id": "perkasa",
+   "name": "Perkasa Manufacturing Berhad",
+   "industry": "Manufacturing",
+   "solution": "Predictive maintenance assistant",
+   "color": "#1d4ed8",
+   "classification": "Internal",
+   "boomiEnvironment": "ARAS-PERKASA-PROD",
+   "region": "Customer data centre - Shah Alam (on-premise runtime)",
+   "connections": [
+    {
+     "id": "sap",
+     "name": "SAP S/4HANA product master",
+     "type": "SAP_S4HANA",
+     "config": {
+      "search": "pump"
+     },
+     "mapping": {
+      "id": "SAP-{product}",
+      "title": "SAP product {product}: {description}",
+      "content": [
+       "description",
+       "product"
+      ],
+      "metadata": [
+       {
+        "from": "language",
+        "to": "language"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [],
+      "autoDetect": false,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "so",
+     "name": "SAP S/4HANA sales orders",
+     "type": "SAP_SALES_ORDERS",
+     "config": {},
+     "mapping": {
+      "id": "SO-{salesOrder}",
+      "title": "Sales order {salesOrder} for customer {customer} ({status})",
+      "content": [
+       "lines",
+       "orderValue",
+       "orderDate",
+       "requestedDelivery",
+       "deliveryStatus"
+      ],
+      "metadata": [
+       {
+        "from": "customer",
+        "to": "customer"
+       },
+       {
+        "from": "materials",
+        "to": "materials"
+       },
+       {
+        "from": "orderDate",
+        "to": "order_date"
+       },
+       {
+        "from": "status",
+        "to": "status"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "sf",
+     "name": "Customer complaints (Service Cloud)",
+     "type": "SALESFORCE",
+     "config": {
+      "object": "Case"
+     },
+     "mapping": {
+      "id": "{CaseNumber}",
+      "title": "Case {CaseNumber}: {Subject}",
+      "content": [
+       "Description",
+       "Status",
+       "Priority",
+       "Type"
+      ],
+      "metadata": [
+       {
+        "from": "CreatedDate",
+        "to": "created_at"
+       },
+       {
+        "from": "Origin",
+        "to": "channel"
+       },
+       {
+        "from": "Account_Name__c",
+        "to": "customer"
+       },
+       {
+        "from": "Product_Code__c",
+        "to": "sap_product"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "ContactName__c",
+       "ContactEmail__c",
+       "ContactPhone__c"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "csv",
+     "name": "Plant maintenance log (CMMS export)",
+     "type": "FILE_CSV",
+     "config": {
+      "fileName": "perkasa_maintenance_log_q3_2026.csv"
+     },
+     "mapping": {
+      "id": "{work_order}",
+      "title": "Work order {work_order}: {asset_name} - {failure_mode}",
+      "content": [
+       "failure_mode",
+       "action_taken",
+       "notes",
+       "downtime_hours"
+      ],
+      "metadata": [
+       {
+        "from": "plant",
+        "to": "plant"
+       },
+       {
+        "from": "sap_product",
+        "to": "sap_product"
+       },
+       {
+        "from": "date",
+        "to": "date"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "technician"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    }
+   ],
+   "questions": [
+    "What problems have we had with chiller pumps?",
+    "Which customers are unhappy and why?",
+    "What caused the seal leakage?",
+    "Which customers ordered eBikes?",
+    "Which headlight orders are still open?"
+   ],
+   "runtime": "onprem"
+  },
+  {
+   "id": "sejahtera",
+   "name": "Klinik Sejahtera Health Group",
+   "industry": "Healthcare",
+   "solution": "Patient experience insights",
+   "color": "#9d174d",
+   "classification": "Restricted",
+   "boomiEnvironment": "ARAS-SEJAHTERA-PROD",
+   "region": "MTAI Sovereign Cloud - Cyberjaya",
+   "connections": [
+    {
+     "id": "sf",
+     "name": "Patient service cases",
+     "type": "SALESFORCE",
+     "config": {
+      "object": "Case"
+     },
+     "mapping": {
+      "id": "{CaseNumber}",
+      "title": "Case {CaseNumber}: {Subject}",
+      "content": [
+       "Description",
+       "Status",
+       "Priority",
+       "Type"
+      ],
+      "metadata": [
+       {
+        "from": "CreatedDate",
+        "to": "created_at"
+       },
+       {
+        "from": "Origin",
+        "to": "channel"
+       },
+       {
+        "from": "Clinic__c",
+        "to": "clinic"
+       },
+       {
+        "from": "Department__c",
+        "to": "department"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "ContactName__c",
+       "ContactEmail__c",
+       "ContactPhone__c"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "csv",
+     "name": "Patient feedback survey",
+     "type": "FILE_CSV",
+     "config": {
+      "fileName": "sejahtera_patient_feedback_oct2026.csv"
+     },
+     "mapping": {
+      "id": "{feedback_id}",
+      "title": "Patient feedback {feedback_id} - {clinic} {department}",
+      "content": [
+       "comments",
+       "rating"
+      ],
+      "metadata": [
+       {
+        "from": "clinic",
+        "to": "clinic"
+       },
+       {
+        "from": "department",
+        "to": "department"
+       },
+       {
+        "from": "visit_date",
+        "to": "visit_date"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [
+       "patient_name",
+       "mykad",
+       "phone"
+      ],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    },
+    {
+     "id": "opendata",
+     "name": "Hospital beds - Selangor (data.gov.my)",
+     "type": "OPEN_DATA",
+     "config": {
+      "dataset": "hospital_beds",
+      "filter": "Selangor@state",
+      "sort": "-date",
+      "limit": 12
+     },
+     "mapping": {
+      "id": "{date}-{district}-{type}",
+      "title": "Hospital beds in {district}, {state} ({type}) {date}",
+      "content": [
+       "beds",
+       "type",
+       "district"
+      ],
+      "metadata": [
+       {
+        "from": "state",
+        "to": "state"
+       },
+       {
+        "from": "date",
+        "to": "period"
+       }
+      ]
+     },
+     "policy": {
+      "maskFields": [],
+      "autoDetect": true,
+      "chunkSize": 500
+     }
+    }
+   ],
+   "questions": [
+    "What do patients complain about at the Klang clinic?",
+    "Were there any billing problems?",
+    "How many hospital beds are there in Selangor?"
+   ],
+   "runtime": "cloud"
+  }
+ ]
+}
