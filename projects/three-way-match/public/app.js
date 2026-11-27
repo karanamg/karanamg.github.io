@@ -64,6 +64,7 @@ async function init() {
   }
   try { CONFIG = await api('/api/config'); } catch { /* keep defaults */ }
   renderSamples(); renderRules(); resetPipeline();
+  if (sessionStorage.getItem('3wm-reset-done')) { sessionStorage.removeItem('3wm-reset-done'); window.scrollTo(0, 0); flash('Demo reset. Everything is back to the start, ready for a new run.'); }
   const h = location.hash.slice(1);
   if (h.startsWith('history=')) openHistory(h.slice(8));
   else if (['dashboard', 'reference', 'how'].includes(h)) showTab(h);
@@ -100,11 +101,12 @@ async function runSample(s) {
   const blob = await (await fetch(`${API}/samples/${encodeURIComponent(s.file)}`)).blob();
   return processFile(blob, s.file);
 }
+let runningAll = false;
 $('#runAll').addEventListener('click', async () => {
-  if (busy) return;
-  const b = $('#runAll'); b.disabled = true;
-  for (let i = 0; i < CONFIG.samples.length; i++) { b.textContent = `Running ${i + 1} of ${CONFIG.samples.length}…`; await runSample(CONFIG.samples[i]); await sleep(900); }
-  b.disabled = false; b.textContent = 'Run all 7 samples';
+  if (busy || runningAll) return;
+  const b = $('#runAll'); b.disabled = true; runningAll = true;
+  try { for (let i = 0; i < CONFIG.samples.length; i++) { b.textContent = `Running ${i + 1} of ${CONFIG.samples.length}…`; await runSample(CONFIG.samples[i]); await sleep(900); } }
+  finally { runningAll = false; b.disabled = false; b.textContent = 'Run all 7 samples'; }
 });
 
 /* ---------------- live pipeline ---------------- */
@@ -268,22 +270,24 @@ function coupaPanel(c) {
 loaders.dashboard = loadDashboard;
 $('#dashRefresh').addEventListener('click', loadDashboard);
 /* ---------------- reset demo ---------------- */
-// Clears every match run (dashboard KPIs, exceptions, run list) and the uploaded invoice PDFs on the gateway,
-// then puts the Process invoice screen back to its starting state.
+// Puts the whole demo back to its first-load state:
+//   server - clears every match run and deletes the uploaded invoice PDFs (sample invoices are kept)
+//   app    - reloads at the start URL, so every tab, cache (POs & receipts), counter, button and the scroll position
+//            are initialised exactly as on first visit, and the Boomi connection is checked again
 async function resetDemo() {
-  if (busy) { alert('An invoice is still being matched. Try again when it finishes.'); return; }
-  if (!confirm('Reset the demo?\n\nThis clears all matched invoices from the dashboard and deletes the uploaded invoice PDFs. The sample invoices are kept.')) return;
+  if (busy || runningAll) { alert('Invoices are still being matched. Try again when the run finishes.'); return; }
+  if (!confirm('Reset the demo?\n\nEverything goes back to the start: all matched invoices are cleared from the dashboard, uploaded invoice PDFs are deleted, and every screen is reset. The sample invoices are kept.')) return;
   const btns = [$('#resetDemo'), $('#dashReset')];
-  btns.forEach((b) => { b.disabled = true; });
+  btns.forEach((b) => { b.disabled = true; b.textContent = 'Resetting…'; });
   try {
     await api('/api/history/reset', { method: 'POST' });
-    resetPipeline(); $('#result').classList.add('hidden'); $('#result').innerHTML = '';
-    $('#runLabel').textContent = 'Waiting for an invoice';
-    if (location.hash.startsWith('#history=')) history.replaceState(null, '', location.pathname);
-    await loadDashboard();
-    flash('Demo reset. The dashboard is empty and ready for a new run.');
-  } catch (e) { alert('Could not reset the demo: ' + e.message); }
-  finally { btns.forEach((b) => { b.disabled = false; }); }
+    sessionStorage.setItem('3wm-reset-done', '1');
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    location.replace(location.pathname);              // drop #dashboard / #history=… and start fresh on Process invoice
+  } catch (e) {
+    alert('Could not reset the demo: ' + e.message);
+    btns.forEach((b) => { b.disabled = false; b.textContent = '↺ Reset demo'; });
+  }
 }
 function flash(msg) {
   let t = $('#flash'); if (!t) { t = document.createElement('div'); t.id = 'flash'; t.className = 'flash'; document.body.appendChild(t); }
