@@ -194,12 +194,28 @@ dialog.guide::backdrop{background:rgba(10,20,40,.55)}
 .primary-btn:hover{background:#1a84e8}
 @media print{dialog.guide,.help-btn{display:none!important}}
 
+/* sizing-model switch */
+.mode-switch{display:flex;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:2px;gap:2px}
+.mode-switch .ms-lbl{font-size:11px;opacity:.7;align-self:center;padding:0 6px 0 8px;text-transform:uppercase;letter-spacing:.4px}
+.mode-switch button{background:none;border:none;color:#fff;opacity:.8;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+.mode-switch button:hover{opacity:1;background:rgba(255,255,255,.1)}
+.mode-switch button.on{background:#fff;color:#12284b;opacity:1}
+@media (max-width:1760px){.mode-switch .ms-lbl{display:none}.topbar .sub{max-width:300px}}
+body.mode-conn .msg-only{display:none!important}
+body:not(.mode-conn) .conn-only{display:none!important}
+table.rows tr.exempt td{color:var(--text-muted)}
+table.rows tr.exempt input.in.txt{color:var(--text-secondary)}
+#connTbl select.in[data-f=connector]{min-width:190px}
+#connTbl select.in[data-f=cls]{min-width:130px}
+
 /* print */
 .print-only{display:none}
 @media print{
   @page{size:A4;margin:12mm}
   body{background:#fff;font-size:11px}
   .topbar .tb-btn,.add-btn,.icon-btn,.no-print{display:none!important}
+  .mode-switch{border:none;background:none}.mode-switch .ms-lbl,.mode-switch button:not(.on){display:none}
+  .mode-switch button.on{background:none;color:#12284b;padding:0}
   .topbar{background:#fff;color:#12284b;border-bottom:3px solid #0073dc;padding:0 0 8px}
   .layout{display:block;padding:0}
   .summary-col{position:static}
@@ -232,6 +248,11 @@ dialog.guide::backdrop{background:rgba(10,20,40,.55)}
     <h1>Boomi Platform Message Estimator</h1>
     <div class="sub">Presales sizing tool · enter workload inputs → derive platform messages → right-size the platform</div>
   </div>
+  <div class="mode-switch" role="group" aria-label="Sizing model">
+    <span class="ms-lbl">Sizing model</span>
+    <button data-mode="messages" title="Size by Boomi Platform Messages (usage-based)">Platform messages</button>
+    <button data-mode="connections" title="Size by connection licences (connector-based)">Connections</button>
+  </div>
   <div class="spacer"></div>
   <button class="tb-btn" id="btnSample" title="Load a worked example">Load sample</button>
   <button class="tb-btn" id="btnNew" title="Clear all inputs">New</button>
@@ -263,7 +284,7 @@ dialog.guide::backdrop{background:rgba(10,20,40,.55)}
     </div>
 
     <!-- Global assumptions -->
-    <div class="card" id="card-settings">
+    <div class="card msg-only" id="card-settings">
       <div class="card-h" data-toggle><span class="chev">▾</span><h2>Sizing assumptions</h2><button class="help-btn" data-guide="settings" title="How are these applied? (example)" aria-label="How are sizing assumptions applied?">?</button><span class="badge">Applies to all services</span></div>
       <div class="card-b">
         <div class="fgrid">
@@ -276,7 +297,18 @@ dialog.guide::backdrop{background:rgba(10,20,40,.55)}
       </div>
     </div>
 
-    <div id="sections"></div>
+    <div id="sections" class="msg-only"></div>
+
+    <!-- Connection-based sizing -->
+    <div class="card conn-only" id="card-conns">
+      <div class="card-h" data-toggle><span class="chev">▾</span><h2>Connection inventory</h2><button class="help-btn" data-guide="conns" title="How are connections counted? (example)" aria-label="How are connections counted?">?</button>
+        <span class="badge">1 licence = 1 unique connection per runtime</span><span class="total" id="tot-conns"></span></div>
+      <div class="card-b">
+        <p class="help">List each <b>endpoint</b> Boomi connects to (a system plus its credentials), not each interface. Reusing a connection in more processes adds no licences; deploying it to another runtime does. Hover over a licence count to see how it's counted. Boomi connectors marked <i>Not licensed</i> (Web Services Server, Event Streams, Data Hub…) can be deployed an unlimited number of times.</p>
+        <div class="tbl-wrap"><table class="rows" id="connTbl" data-sec="conns"></table></div>
+        <div class="row-actions"><button class="add-btn" id="btnAddConn">+ Add connection</button><button class="btn no-print" id="btnSampleConns" style="margin-top:10px">Load sample connections</button></div>
+      </div>
+    </div>
 
     <!-- Platform fit -->
     <div class="card" id="card-fit">
@@ -287,8 +319,18 @@ dialog.guide::backdrop{background:rgba(10,20,40,.55)}
       </div>
     </div>
 
+    <!-- Edition inclusions (connection mode) -->
+    <div class="card conn-only collapsed" id="card-edinc">
+      <div class="card-h" data-toggle><span class="chev">▾</span><h2>Edition inclusions</h2><span class="badge">Admin · editable</span></div>
+      <div class="card-b">
+        <div class="warnbox"><span>ⓘ</span><span><b>Defaults come from Boomi's public Integration editions page and are not an official quote.</b> The first edition has production connections only, and Enterprise connectors start at Professional (extra cost below Enterprise). Small Business and Trading Partner licences aren't listed as included, so the tool treats them as additional. Update the numbers to match the customer's order form.</span></div>
+        <div class="tbl-wrap"><table class="rows" id="edIncTbl"></table></div>
+        <div class="row-actions" style="margin-top:10px"><button class="btn" id="btnResetEdInc">Reset to defaults</button></div>
+      </div>
+    </div>
+
     <!-- Conversion rates -->
-    <div class="card collapsed" id="card-rates">
+    <div class="card collapsed msg-only" id="card-rates">
       <div class="card-h" data-toggle><span class="chev">▾</span><h2>Message conversion rates</h2><span class="badge">Admin · editable</span></div>
       <div class="card-b">
         <div class="warnbox"><span>ⓘ</span><span><b>These defaults are for estimation only and are not an official Boomi document.</b> Defaults follow Boomi's published Platform Message definition (1 document = 1 message, including request/response replies) and Boomi's published service equivalents. Confirm them with your Boomi contact for each opportunity.</span></div>
@@ -306,7 +348,47 @@ dialog.guide::backdrop{background:rgba(10,20,40,.55)}
 
   <!-- Summary -->
   <aside class="summary-col">
-    <div class="card">
+    <!-- Connection summary -->
+    <div class="card conn-only">
+      <div class="hero">
+        <div class="print-only" id="cPrintMeta" style="margin-bottom:8px"></div>
+        <div class="lbl">Connection licences required · Year 1</div>
+        <div class="big" id="cTotal">0</div>
+        <div class="unit" id="cSub"></div>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Production licences</div><div class="v" id="cProd">0</div></div>
+          <div class="kpi"><div class="k">Test licences</div><div class="v" id="cTest">0</div></div>
+          <div class="kpi"><div class="k">Unlicensed Boomi connectors</div><div class="v" id="cExempt">0</div></div>
+          <div class="kpi hl"><div class="k" id="cEndK">End of term</div><div class="v" id="cEnd">0</div></div>
+        </div>
+      </div>
+      <div class="sum-block">
+        <h3 class="sec-title">Licences by connector class · Year 1 (prod + test)</h3>
+        <div class="bars" id="cBars"></div>
+      </div>
+      <div class="sum-block">
+        <h3 class="sec-title" id="cProjTitle">Licences over the term</h3>
+        <div class="vbars" id="cProjBars"></div>
+        <div class="vlabels" id="cProjLabels"></div>
+      </div>
+      <div class="sum-block">
+        <h3 class="sec-title">Breakdown</h3>
+        <table class="sum" id="cSumTbl"></table>
+      </div>
+      <div class="sum-block">
+        <h3 class="sec-title">Platform recommendation</h3>
+        <div style="font-size:12px;color:var(--text-secondary)">Minimum Integration edition (connections + capabilities)</div>
+        <div class="edition" id="cEdBar"></div>
+        <ul class="reasons" id="cEdReasons"></ul>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:12px" id="cCovTitle"></div>
+        <table class="sum" id="cCovTbl" style="margin-top:4px"></table>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:12px">Platform services in scope (licensed separately)</div>
+        <div class="chips" id="cSvcChips" style="margin-top:6px"></div>
+        <div class="note">Estimate only, not an official Boomi document. Counting rules follow Boomi Help › Licensing. Confirm classes and inclusions with your Boomi contact.</div>
+      </div>
+    </div>
+
+    <div class="card msg-only">
       <div class="hero">
         <div class="print-only" id="printMeta" style="margin-bottom:8px"></div>
         <div class="lbl">Estimated platform messages · per month</div>

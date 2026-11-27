@@ -256,6 +256,149 @@ const SECTIONS = [
 ];
 
 /* ============================================================
+   CONNECTION-BASED LICENSING (alternative sizing model)
+   Rules from Boomi Help › Platform › Licensing and Integration editions:
+   - 1 license = 1 unique connection (component ID) per runtime
+     (basic runtime, runtime cluster regardless of nodes, or cloud attachment)
+   - reusing a connection in many processes/operations costs nothing extra
+   - copies of a connection (new component ID) count separately
+   - each Trading Partner component = 1 Trading Partner license
+   - test and production licenses are separate; Base edition is prod-only
+   - Boomi-internal connectors below deploy an unlimited number of times
+   ============================================================ */
+const CONN_CLASSES = {
+  std:{label:'Standard'}, ent:{label:'Enterprise'}, sb:{label:'Small Business'},
+  tp:{label:'Trading Partner'}, exempt:{label:'Not licensed (unlimited)'},
+};
+const CLASS_ORDER = ['std','ent','sb','tp'];
+
+/* v = class named as an example in Boomi docs; otherwise "most connectors are Standard", verify */
+const CONN_CATALOG = {
+  rest:{label:'REST Client', cls:'std'},
+  http:{label:'HTTP Client', cls:'std'},
+  openapi:{label:'OpenAPI', cls:'std'},
+  db:{label:'Database V2 (JDBC)', cls:'std'},
+  sftp:{label:'SFTP / FTP', cls:'std', v:true},
+  disk:{label:'Disk v2', cls:'std', v:true},
+  mail:{label:'Mail (IMAP)', cls:'std'},
+  ldap:{label:'LDAP / Active Directory', cls:'std'},
+  salesforce:{label:'Salesforce', cls:'std', v:true},
+  netsuite:{label:'NetSuite', cls:'std', v:true},
+  servicenow:{label:'ServiceNow', cls:'std'},
+  shopify:{label:'Shopify', cls:'std'},
+  workday:{label:'Workday', cls:'std'},
+  sap:{label:'SAP (BAPI / IDoc / JCo)', cls:'ent', v:true},
+  oracleebs:{label:'Oracle E-Business Suite', cls:'ent', v:true},
+  quickbooks:{label:'QuickBooks', cls:'sb', v:true},
+  sage50:{label:'Sage 50 / Peachtree', cls:'sb', v:true},
+  tp:{label:'Trading partner (X12 / EDIFACT / HL7)', cls:'tp', v:true},
+  wss:{label:'Web Services Server (listener / API)', cls:'exempt', v:true},
+  events:{label:'Event Streams', cls:'exempt', v:true},
+  datahub:{label:'Boomi Data Hub', cls:'exempt', v:true},
+  fss:{label:'Flow Services Server', cls:'exempt', v:true},
+  queue:{label:'Atom Queue', cls:'exempt', v:true},
+  platformapi:{label:'AtomSphere / Partner API', cls:'exempt', v:true},
+  sap4:{label:'Boomi for SAP', cls:'exempt', v:true},
+  mft:{label:'Boomi MFT', cls:'exempt', v:true},
+  as2s:{label:'AS2 Shared Server', cls:'exempt', v:true},
+  mllp:{label:'MLLP Server / OFTP2 Server', cls:'exempt', v:true},
+  other:{label:'Other connector', cls:'std'},
+};
+
+/* Included connection licenses per edition [prod, test], from Boomi's Integration editions page.
+   Small Business and Trading Partner licenses are not listed as included. */
+const DEFAULT_ED_INC = [
+  {sp:2,  st:0,  ep:0, et:0, test:false, ent:false},
+  {sp:5,  st:5,  ep:0, et:0, test:true,  ent:true},
+  {sp:7,  st:7,  ep:0, et:0, test:true,  ent:true},
+  {sp:10, st:20, ep:1, et:2, test:true,  ent:true},
+  {sp:15, st:30, ep:2, et:4, test:true,  ent:true},
+];
+
+const CONN_FIELDS = [
+  {k:'name', label:'System / endpoint', type:'text', def:'New connection'},
+  {k:'connector', label:'Connector', type:'select', opts:Object.fromEntries(Object.entries(CONN_CATALOG).map(([k,v])=>[k,v.label])), def:'rest'},
+  {k:'cls', label:'Class', type:'select', opts:Object.fromEntries(Object.entries(CONN_CLASSES).map(([k,v])=>[k,v.label])), def:'std', tip:'Licence class. Defaults from the connector; change it if the customer\'s order form says otherwise.'},
+  {k:'qty', label:'Unique connections', type:'num', def:1, tip:'Distinct connection components (different component IDs). One SAP system used by 40 processes = 1. Separate credentials/instances, or a copied connection, = 2. For trading partners: the number of trading partner components.'},
+  {k:'prodRt', label:'Prod runtimes', type:'num', def:1, tip:'Production runtimes this connection is deployed to. A runtime cluster or a cloud attachment counts once, whatever the node count.'},
+  {k:'testRt', label:'Test runtimes', type:'num', def:1, tip:'Test runtimes this connection is deployed to (uses Test licences). 0 if it is never deployed to a test environment.'},
+  {k:'phase', label:'Live in', type:'select', opts:{1:'Year 1',2:'Year 2',3:'Year 3',4:'Year 4',5:'Year 5'}, def:'1', tip:'Contract year in which this connection goes live'},
+];
+
+const CONN_SAMPLE = [
+  {name:'Shopify store', connector:'shopify', cls:'std', qty:1, prodRt:1, testRt:1, phase:'1'},
+  {name:'SAP S/4HANA', connector:'sap', cls:'ent', qty:1, prodRt:1, testRt:1, phase:'1'},
+  {name:'WMS database', connector:'db', cls:'std', qty:1, prodRt:1, testRt:1, phase:'1'},
+  {name:'Salesforce CRM', connector:'salesforce', cls:'std', qty:1, prodRt:1, testRt:1, phase:'1'},
+  {name:'Workday HCM', connector:'workday', cls:'std', qty:1, prodRt:1, testRt:1, phase:'1'},
+  {name:'Active Directory', connector:'ldap', cls:'std', qty:1, prodRt:1, testRt:0, phase:'1'},
+  {name:'Retail partners (12)', connector:'tp', cls:'tp', qty:12, prodRt:1, testRt:1, phase:'1'},
+  {name:'Partner SFTP drop', connector:'sftp', cls:'std', qty:1, prodRt:1, testRt:1, phase:'1'},
+  {name:'Order status API', connector:'wss', cls:'exempt', qty:1, prodRt:1, testRt:1, phase:'1'},
+  {name:'order-events topic', connector:'events', cls:'exempt', qty:1, prodRt:1, testRt:1, phase:'1'},
+  {name:'Customer / product MDM', connector:'datahub', cls:'exempt', qty:1, prodRt:1, testRt:1, phase:'1'},
+  {name:'POS platform API', connector:'rest', cls:'std', qty:1, prodRt:1, testRt:1, phase:'2'},
+];
+
+function connCalc(r){
+  const exempt = r.cls==='exempt';
+  const q = n(r.qty), p = exempt?0:q*n(r.prodRt), t = exempt?0:q*n(r.testRt);
+  const cl = CONN_CLASSES[r.cls]?.label || r.cls;
+  const ex = exempt
+    ? [`<b>${esc(CONN_CATALOG[r.connector]?.label||'This connector')}</b> is a Boomi connector you can deploy an unlimited number of times.`, `Licences used: <b>0</b>`]
+    : [`<b>${cl} class</b>`,
+       `Prod: ${fx(q)} unique × ${fx(r.prodRt)} runtime${n(r.prodRt)===1?'':'s'} = <b>${fmt(p)}</b>`,
+       `Test: ${fx(q)} unique × ${fx(r.testRt)} runtime${n(r.testRt)===1?'':'s'} = <b>${fmt(t)}</b>`,
+       `Reusing the connection in more processes adds nothing.`];
+  return {prod:p, test:t, exempt, ex};
+}
+
+function computeConns(){
+  const years = Math.min(5,Math.max(1,Math.round(n(S.settings.years)||1)));
+  const rows = S.conns.map(r=>({id:r.id, r, ...connCalc(r)}));
+  const byYear = y => {
+    const o = {}; CLASS_ORDER.forEach(c=>o[c]={prod:0,test:0});
+    rows.filter(x=>!x.exempt && (+x.r.phase||1)<=y).forEach(x=>{ const c=o[x.r.cls]; if(c){ c.prod+=x.prod; c.test+=x.test; } });
+    o.prod = CLASS_ORDER.reduce((a,c)=>a+o[c].prod,0); o.test = CLASS_ORDER.reduce((a,c)=>a+o[c].test,0);
+    return o;
+  };
+  const proj = Array.from({length:years},(_,i)=>({year:i+1, ...byYear(i+1)}));
+  const end = proj[proj.length-1];
+  const exemptCount = rows.filter(x=>x.exempt).reduce((a,x)=>a+n(x.r.qty),0);
+  return {rows, proj, y1:proj[0], end, exemptCount, years};
+}
+
+function connRecommend(C, fitLvl){
+  const e = C.end, inc = S.edInc, reasons = [];
+  const needTest = e.test>0, needEnt = e.ent.prod+e.ent.test>0;
+  let lvl = 0;
+  for(; lvl<EDITIONS.length; lvl++){
+    const i = inc[lvl], d = DEFAULT_ED_INC[lvl];
+    if(needTest && !d.test) continue;
+    if(needEnt && !d.ent) continue;
+    if(n(i.sp)>=e.std.prod && n(i.st)>=e.std.test) break;
+  }
+  const covered = lvl<EDITIONS.length;
+  if(!covered) lvl = EDITIONS.length-1;
+  if(needTest && !DEFAULT_ED_INC[0].test) reasons.push({lvl:1, text:`${fmt(e.test)} test licences needed → test environments start at ${EDITIONS[1]}`});
+  if(needEnt) reasons.push({lvl:1, text:`Enterprise-class connectors (${fmt(e.ent.prod)} prod / ${fmt(e.ent.test)} test) → ${EDITIONS[1]}+`});
+  reasons.push({lvl, text: covered
+    ? `${fmt(e.std.prod)} prod / ${fmt(e.std.test)} test Standard connections fit ${EDITIONS[lvl]} (${fmt(n(inc[lvl].sp))} / ${fmt(n(inc[lvl].st))} included)`
+    : `${fmt(e.std.prod)} prod / ${fmt(e.std.test)} test Standard connections exceed every edition's inclusion → ${EDITIONS[lvl]} plus additional licences`});
+  if(fitLvl>lvl) reasons.push({lvl:fitLvl, text:`Capability requirements (Platform fit) → ${EDITIONS[fitLvl]}`});
+  const final = Math.max(lvl, fitLvl);
+  reasons.sort((a,b)=>b.lvl-a.lvl);
+  const i = inc[final];
+  const cov = [
+    ['Standard', 'prod', e.std.prod, n(i.sp)], ['Standard', 'test', e.std.test, n(i.st)],
+    ['Enterprise', 'prod', e.ent.prod, n(i.ep)], ['Enterprise', 'test', e.ent.test, n(i.et)],
+    ['Small Business', 'prod', e.sb.prod, 0], ['Small Business', 'test', e.sb.test, 0],
+    ['Trading Partner', 'prod', e.tp.prod, 0], ['Trading Partner', 'test', e.tp.test, 0],
+  ].map(([c,env,req,incl])=>({c, env, req, incl, add:Math.max(0,req-incl)}));
+  return {lvl:final, reasons, cov};
+}
+
+/* ============================================================
    STATE
    ============================================================ */
 let S = blankState();
@@ -267,7 +410,10 @@ function blankState(){
     rates:Object.fromEntries(Object.entries(DEFAULT_RATES).map(([k,v])=>[k,v.value])),
     bands:DEFAULT_BANDS.map(b=>({...b})),
     fit:{},
-    collapsed:{'card-rates':true},
+    collapsed:{'card-rates':true,'card-edinc':true},
+    mode:'messages',
+    conns:[],
+    edInc:DEFAULT_ED_INC.map(({sp,st,ep,et})=>({sp,st,ep,et})),
   };
   SECTIONS.forEach(sec=>{ s[sec.key]=[]; });
   return s;
@@ -277,10 +423,12 @@ function sampleState(){
   const s = blankState();
   s.meta = {customer:'Acme Retail (sample)', opportunity:'Order-to-cash & omnichannel modernisation', preparedBy:'Presales', ae:'', date:new Date().toISOString().slice(0,10), region:'APAC · Boomi cloud runtime', notes:'Sample scenario. Volumes are illustrative.'};
   SECTIONS.forEach(sec=>{ s[sec.key]=sec.sample.map(r=>({...defaultsFor(sec), ...r, id:uid()})); });
+  s.conns = CONN_SAMPLE.map(r=>({...defaultsForConn(), ...r, id:uid()}));
   s.fit = {nonProdEnv:true, cloudRuntime:true, orchestration:true, entConnectors:true, apiEnable:true, apim:true, b2b:true, mdm:true, elt:true, events:true, apps:true, agents:true};
   return s;
 }
 
+function defaultsForConn(){ const o={}; CONN_FIELDS.forEach(f=>o[f.k]=f.def); return o; }
 function defaultsFor(sec){ const o={}; sec.fields.forEach(f=>o[f.k]=f.def); return o; }
 function uid(){ return Math.random().toString(36).slice(2,10); }
 const n = v => { const x = parseFloat(v); return isFinite(x) && x>0 ? x : 0; };
@@ -443,10 +591,10 @@ function renderFit(){
 function renderStatic(){
   document.querySelectorAll('[data-meta]').forEach(el=>el.value = S.meta[el.dataset.meta]??'');
   document.querySelectorAll('[data-set]').forEach(el=>el.value = S.settings[el.dataset.set]??'');
-  ['card-meta','card-settings','card-fit','card-rates'].forEach(id=>{
+  ['card-meta','card-settings','card-fit','card-rates','card-conns','card-edinc'].forEach(id=>{
     const c=document.getElementById(id); if(S.collapsed[id]!==undefined) c.classList.toggle('collapsed',!!S.collapsed[id]);
   });
-  renderSections(); renderRates(); renderBands(); renderFit();
+  renderSections(); renderRates(); renderBands(); renderFit(); renderConns(); renderEdInc(); setMode(S.mode);
 }
 
 /* ============================================================
@@ -516,11 +664,99 @@ function update(){
   // print header
   const m = S.meta;
   document.getElementById('printMeta').innerHTML = `<b>${esc(m.customer||'Customer')}</b> · ${esc(m.opportunity||'')}<br><span style="color:#666">Prepared by ${esc(m.preparedBy||'')}${m.ae?' for AE '+esc(m.ae):''} · ${esc(m.date||'')} · ${esc(m.region||'')}</span>`;
-  document.title = `${m.customer?m.customer+' · ':''}Boomi Platform Message Estimator`;
+  document.getElementById('cPrintMeta').innerHTML = document.getElementById('printMeta').innerHTML;
+  document.title = `${m.customer?m.customer+' · ':''}Boomi ${S.mode==='connections'?'Connection':'Platform Message'} Estimator`;
+  updateConns(R);
   save();
   return R;
 }
 const setText = (id,t)=>{ document.getElementById(id).textContent = t; };
+
+/* ============================================================
+   RENDER: connection-based mode
+   ============================================================ */
+function fieldInput(f, v){
+  if(f.type==='text') return `<input class="in txt" data-f="${f.k}" value="${esc(v)}">`;
+  if(f.type==='num') return `<input class="in" type="number" min="0" step="1" data-f="${f.k}" value="${esc(v)}">`;
+  return `<select class="in" data-f="${f.k}">${Object.entries(f.opts).map(([k,l])=>`<option value="${k}"${String(k)===String(v)?' selected':''}>${esc(l)}</option>`).join('')}</select>`;
+}
+function connRowHtml(r){
+  const cells = CONN_FIELDS.map(f=>`<td>${fieldInput(f, r[f.k])}</td>`).join('');
+  return `<tr data-id="${r.id}" class="${r.cls==='exempt'?'exempt':''}">${cells}<td class="calc" data-c="0"></td><td class="calc msgs" data-c="1"></td><td class="del"><button class="icon-btn" data-del="${r.id}" title="Remove row">×</button></td></tr>`;
+}
+function renderConns(){
+  const head = CONN_FIELDS.map(f=>`<th${f.type==='num'?' class="r"':''}>${f.tip?`<span class="tip" title="${esc(f.tip)}">${esc(f.label)}</span>`:esc(f.label)}</th>`).join('')
+    + `<th class="r">Prod licences</th><th class="r msgs-h">Test licences</th><th class="del-h"></th>`;
+  document.getElementById('connTbl').innerHTML = `<thead><tr>${head}</tr></thead><tbody>${S.conns.map(connRowHtml).join('')}</tbody>`;
+}
+function renderEdInc(){
+  document.getElementById('edIncTbl').innerHTML = `<thead><tr><th>Edition</th><th class="r">Standard · prod</th><th class="r">Standard · test</th><th class="r">Enterprise · prod</th><th class="r">Enterprise · test</th></tr></thead><tbody>` +
+    EDITIONS.map((e,i)=>`<tr><td>${esc(e)}</td>${['sp','st','ep','et'].map(k=>`<td style="width:130px"><input class="in" type="number" min="0" step="1" data-edinc="${i}" data-ek="${k}" value="${esc(S.edInc[i][k])}"></td>`).join('')}</tr>`).join('') + '</tbody>';
+}
+function setMode(m){
+  S.mode = m;
+  document.body.classList.toggle('mode-conn', m==='connections');
+  document.querySelectorAll('[data-mode]').forEach(b=>{ b.classList.toggle('on', b.dataset.mode===m); b.setAttribute('aria-pressed', b.dataset.mode===m); });
+}
+
+function updateConns(R){
+  const C = computeConns();
+  const tbl = document.getElementById('connTbl');
+  C.rows.forEach(x=>{
+    const tr = tbl.querySelector(`tr[data-id="${x.id}"]`); if(!tr) return;
+    tr.classList.toggle('exempt', x.exempt);
+    tr.querySelector('td[data-c="0"]').textContent = x.exempt ? '0' : fmt(x.prod);
+    const mc = tr.querySelector('td[data-c="1"]'); mc.textContent = x.exempt ? '0' : fmt(x.test);
+    const tipHtml = `<div class="tip-title">How this is counted</div>` + x.ex.map(l=>`<div class="tip-line">${l}</div>`).join('');
+    tr.querySelector('td[data-c="0"]').dataset.tip = tipHtml; mc.dataset.tip = tipHtml;
+  });
+  const y1 = C.y1, e = C.end;
+  document.getElementById('tot-conns').innerHTML = S.conns.length ? `${fmt(y1.prod+y1.test)} <small>licences · Year 1</small>` : '<small>none yet</small>';
+
+  setText('cTotal', fmt(y1.prod+y1.test));
+  setText('cSub', `${fmt(y1.prod)} production + ${fmt(y1.test)} test licences`);
+  setText('cProd', fmt(y1.prod)); setText('cTest', fmt(y1.test));
+  setText('cEnd', fmt(e.prod+e.test)); setText('cExempt', fmt(C.exemptCount));
+  setText('cEndK', `End of term (Year ${C.years})`);
+
+  // bars by class (Year 1, prod + test)
+  const max = Math.max(1, ...CLASS_ORDER.map(c=>y1[c].prod+y1[c].test));
+  document.getElementById('cBars').innerHTML = CLASS_ORDER.map(c=>{
+    const v = y1[c].prod+y1[c].test;
+    return `<div class="bar-row${v?'':' zero'}" data-tip="<b>${esc(CONN_CLASSES[c].label)}</b><br>${fmt(y1[c].prod)} production<br>${fmt(y1[c].test)} test">
+      <div class="name">${esc(CONN_CLASSES[c].label)}</div>
+      <div class="track">${v?`<div class="fill" style="width:${(v/max*100).toFixed(2)}%"></div>`:''}</div>
+      <div class="val">${v?fmt(v):'n/a'}</div></div>`;
+  }).join('');
+
+  // projection
+  const pmax = Math.max(1, ...C.proj.map(p=>p.prod+p.test));
+  setText('cProjTitle', `Licences over the ${C.years}-year term (cumulative, by go-live year)`);
+  document.getElementById('cProjBars').innerHTML = C.proj.map(p=>
+    `<div class="vbar" data-tip="<b>Year ${p.year}</b><br>${fmt(p.prod)} production<br>${fmt(p.test)} test"><div class="cap">${fmt(p.prod+p.test)}</div><div class="col" style="height:${((p.prod+p.test)/pmax*82).toFixed(2)}%"></div></div>`).join('');
+  document.getElementById('cProjLabels').innerHTML = C.proj.map(p=>`<div>Year ${p.year}</div>`).join('');
+
+  // breakdown
+  document.getElementById('cSumTbl').innerHTML = `<thead><tr><th>Class</th><th class="r">Prod</th><th class="r">Test</th><th class="r">Total</th></tr></thead><tbody>
+    ${CLASS_ORDER.map(c=>`<tr><td>${esc(CONN_CLASSES[c].label)}</td><td class="r">${fmt(y1[c].prod)}</td><td class="r">${fmt(y1[c].test)}</td><td class="r">${fmt(y1[c].prod+y1[c].test)}</td></tr>`).join('')}
+    <tr class="tot"><td>Year 1</td><td class="r">${fmt(y1.prod)}</td><td class="r">${fmt(y1.test)}</td><td class="r">${fmt(y1.prod+y1.test)}</td></tr>
+    ${C.years>1?`<tr class="tot"><td>Year ${C.years} (end of term)</td><td class="r">${fmt(e.prod)}</td><td class="r">${fmt(e.test)}</td><td class="r">${fmt(e.prod+e.test)}</td></tr>`:''}
+    <tr><td colspan="4" style="color:var(--text-muted)">${fmt(C.exemptCount)} Boomi connector${C.exemptCount===1?'':'s'} (Web Services Server, Event Streams, Data Hub…) use no licence</td></tr></tbody>`;
+
+  // recommendation
+  const fitLvl = recommend(R).lvl;
+  const rec = connRecommend(C, fitLvl);
+  document.getElementById('cEdBar').innerHTML = EDITIONS.map((ed,i)=>`<div class="${i===rec.lvl?'rec':i>rec.lvl?'':'on'}">${esc(ed)}</div>`).join('');
+  document.getElementById('cEdReasons').innerHTML = rec.reasons.map(r=>`<li>${esc(r.text)}</li>`).join('');
+  setText('cCovTitle', `${EDITIONS[rec.lvl]}: included vs required (end of term)`);
+  const covRows = rec.cov.filter(c=>c.req||c.incl);
+  document.getElementById('cCovTbl').innerHTML = `<thead><tr><th>Licence</th><th class="r">Required</th><th class="r">Included</th><th class="r">Additional</th></tr></thead><tbody>
+    ${covRows.length ? covRows.map(c=>`<tr><td>${esc(c.c)} · ${c.env}</td><td class="r">${fmt(c.req)}</td><td class="r">${fmt(c.incl)}</td><td class="r"${c.add?' style="font-weight:700;color:var(--brand-2)"':''}>${c.add?'+'+fmt(c.add):'0'}</td></tr>`).join('') : '<tr><td colspan="4" style="color:var(--text-muted)">Add connections on the left.</td></tr>'}
+    <tr class="tot"><td>Additional licences</td><td></td><td></td><td class="r">${fmt(rec.cov.reduce((a,c)=>a+c.add,0))}</td></tr></tbody>`;
+  const services = recommend(R).services;
+  document.getElementById('cSvcChips').innerHTML = [...services].map(([name,on])=>`<span class="chip${on?' on':''}">${on?'✓ ':''}${esc(name)}</span>`).join('');
+  return C;
+}
 
 /* ============================================================
    EVENTS
@@ -532,10 +768,15 @@ document.addEventListener('input', e=>{
   if(el.dataset.rate){ S.rates[el.dataset.rate] = el.value; return update(); }
   if(el.dataset.band!==undefined){ const b=S.bands[+el.dataset.band]; b[el.dataset.bf] = el.dataset.bf==='upTo' ? (el.value===''?null:el.value) : el.value; return update(); }
   if(el.dataset.fit){ S.fit[el.dataset.fit] = el.checked; return update(); }
+  if(el.dataset.edinc!==undefined){ S.edInc[+el.dataset.edinc][el.dataset.ek] = el.value; return update(); }
   if(el.dataset.f){
     const tr = el.closest('tr'); const key = el.closest('table').dataset.sec;
     const row = S[key].find(r=>r.id===tr.dataset.id); if(!row) return;
     row[el.dataset.f] = el.type==='checkbox' ? el.checked : el.value;
+    if(key==='conns' && el.dataset.f==='connector'){
+      row.cls = CONN_CATALOG[el.value]?.cls || 'std';
+      tr.querySelector('select[data-f="cls"]').value = row.cls;
+    }
     update();
   }
 });
@@ -557,13 +798,27 @@ document.addEventListener('click', e=>{
     const tr = t.closest('tr'); const key = t.closest('table').dataset.sec;
     S[key] = S[key].filter(r=>r.id!==t.dataset.del); tr.remove(); return update();
   }
+  const mb = t.closest('[data-mode]');
+  if(mb){ setMode(mb.dataset.mode); update(); toast(mb.dataset.mode==='connections'?'Connection-based sizing':'Platform-message sizing'); return; }
+  if(t.id==='btnAddConn'){
+    const row = {...defaultsForConn(), id:uid()}; S.conns.push(row);
+    const tbody = document.querySelector('#connTbl tbody');
+    tbody.insertAdjacentHTML('beforeend', connRowHtml(row));
+    tbody.lastElementChild.querySelector('input')?.select();
+    return update();
+  }
+  if(t.id==='btnSampleConns'){
+    if(S.conns.length && !confirm('Replace the connection list with the sample connections?')) return;
+    S.conns = CONN_SAMPLE.map(r=>({...defaultsForConn(), ...r, id:uid()})); renderConns(); update(); toast('Sample connections loaded'); return;
+  }
+  if(t.id==='btnResetEdInc'){ S.edInc = blankState().edInc; renderEdInc(); update(); toast('Edition inclusions reset'); return; }
   if(t.dataset.delband!==undefined){ S.bands.splice(+t.dataset.delband,1); renderBands(); return update(); }
   if(t.id==='btnAddBand'){ S.bands.push({name:'New band', upTo:null}); renderBands(); return update(); }
 });
 
 const on = (id,fn)=>document.getElementById(id).addEventListener('click',fn);
-on('btnSample', ()=>{ if(hasData() && !confirm('Replace the current inputs with the sample scenario?')) return; S = sampleState(); renderStatic(); update(); toast('Sample scenario loaded'); });
-on('btnNew', ()=>{ if(hasData() && !confirm('Clear all inputs and start a new estimate?')) return; S = blankState(); S[SECTIONS[0].key].push({...defaultsFor(SECTIONS[0]), id:uid()}); renderStatic(); update(); toast('New estimate'); });
+on('btnSample', ()=>{ if(hasData() && !confirm('Replace the current inputs with the sample scenario?')) return; const md=S.mode; S = sampleState(); S.mode=md; renderStatic(); update(); toast('Sample scenario loaded'); });
+on('btnNew', ()=>{ if(hasData() && !confirm('Clear all inputs and start a new estimate?')) return; const md=S.mode; S = blankState(); S.mode=md; S[SECTIONS[0].key].push({...defaultsFor(SECTIONS[0]), id:uid()}); S.conns.push({...defaultsForConn(), id:uid()}); renderStatic(); update(); toast('New estimate'); });
 on('btnPrint', ()=>window.print());
 on('btnTheme', ()=>{ const r=document.documentElement; const d = r.dataset.theme==='dark'?'light':'dark'; r.dataset.theme=d; localStorage.setItem(STORAGE_KEY+'-theme',d); });
 on('btnResetRates', ()=>{ S.rates = blankState().rates; renderRates(); update(); toast('Rates reset to defaults'); });
@@ -582,6 +837,7 @@ document.getElementById('fileIn').addEventListener('change', async e=>{
   e.target.value='';
 });
 on('btnCsv', ()=>{
+  if(S.mode==='connections') return connCsv();
   const R = compute(); const lines = [['Section','Item','Usage / month','Usage unit','Messages / month','Messages / year']];
   R.svc.forEach(s=>s.rows.forEach(r=>{
     const row = S[s.sec.key].find(x=>x.id===r.id);
@@ -595,7 +851,21 @@ on('btnCsv', ()=>{
   download(`${name}-platform-messages.csv`, csv, 'text/csv');
 });
 
-function hasData(){ return SECTIONS.some(s=>S[s.key].length) || S.meta.customer; }
+function connCsv(){
+  const C = computeConns(), R = compute(), rec = connRecommend(C, recommend(R).lvl);
+  const lines = [['System / endpoint','Connector','Class','Unique connections','Prod runtimes','Test runtimes','Live in','Prod licences','Test licences']];
+  C.rows.forEach(x=>lines.push([x.r.name, CONN_CATALOG[x.r.connector]?.label||x.r.connector, CONN_CLASSES[x.r.cls]?.label||x.r.cls, n(x.r.qty), n(x.r.prodRt), n(x.r.testRt), 'Year '+x.r.phase, x.prod, x.test]));
+  lines.push([]);
+  C.proj.forEach(p=>lines.push(['Total',`Year ${p.year} (cumulative)`,'','','','','',p.prod,p.test]));
+  lines.push([]); lines.push(['Recommended edition', EDITIONS[rec.lvl]]);
+  lines.push(['Licence','Environment','Required','Included','Additional']);
+  rec.cov.forEach(c=>lines.push([c.c, c.env, c.req, c.incl, c.add]));
+  lines.push([]); lines.push(['Estimate only, not an official Boomi document.']);
+  const csv = lines.map(l=>l.map(v=>{ v=String(v??''); return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v; }).join(',')).join('\n');
+  const name = (S.meta.customer||'estimate').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+  download(`${name}-connection-licences.csv`, csv, 'text/csv');
+}
+function hasData(){ return SECTIONS.some(s=>S[s.key].length) || S.conns.length || S.meta.customer; }
 function download(name, text, type){
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text],{type})); a.download = name; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
@@ -624,6 +894,9 @@ function normalize(s){
   const b = blankState();
   const out = {...b, ...s, meta:{...b.meta,...(s.meta||{})}, settings:{...b.settings,...(s.settings||{})}, rates:{...b.rates,...(s.rates||{})}, fit:{...(s.fit||{})}, collapsed:{...b.collapsed,...(s.collapsed||{})}};
   out.bands = Array.isArray(s.bands)&&s.bands.length ? s.bands : b.bands;
+  out.mode = s.mode==='connections' ? 'connections' : 'messages';
+  out.conns = (Array.isArray(s.conns) ? s.conns : CONN_SAMPLE).map(r=>({...defaultsForConn(), ...r, id:r.id||uid()}));
+  out.edInc = DEFAULT_ED_INC.map((d,i)=>({sp:d.sp,st:d.st,ep:d.ep,et:d.et, ...((s.edInc||[])[i]||{})}));
   SECTIONS.forEach(sec=>{ out[sec.key] = (s[sec.key]||[]).map(r=>({...defaultsFor(sec), ...r, id:r.id||uid()})); });
   return out;
 }
@@ -759,6 +1032,7 @@ const GUIDES = {
 
 function guideHtml(key){
   if(key==='settings') return settingsGuideHtml();
+  if(key==='conns') return connGuideHtml();
   const sec = SECTIONS.find(s=>s.key===key), g = GUIDES[key];
   const row = {...defaultsFor(sec), ...sec.sample[0]};
   const c = sec.calc(row);
@@ -832,3 +1106,39 @@ document.addEventListener('click', e=>{
     toast('Example added. Adjust the numbers to fit your customer.');
   }
 }, true);
+
+function connGuideHtml(){
+  const ex = [
+    ['1 process with 2 different connections, deployed to 1 runtime','2'],
+    ['2 processes that reuse the same 2 connections, 1 runtime','2'],
+    ['50 processes sharing 3 connections, 1 runtime','3'],
+    ['1 process with 2 connections, environment with 2 basic runtimes','4'],
+    ['1 process with 2 connections, a 3-node runtime cluster','2'],
+    ['A copied process whose connections were copied too (new component IDs)','2 more'],
+  ];
+  return `
+    <h2>Connection-based sizing: how it's counted</h2>
+    <p class="g-plain">In the connection model the customer buys <b>connection licences</b> instead of messages. <b>One licence = one unique connection per runtime.</b> A connection is the component that holds an endpoint's URL and credentials, such as "SAP production" or "Salesforce org". Volume doesn't matter: 10 orders a day or 10 million use the same licence.</p>
+    <h3>The rules</h3>
+    <ul class="g-tips">
+      <li><b>Unique, not per use.</b> A connection is identified by its component ID. Reusing it across many processes and operations costs nothing extra.</li>
+      <li><b>Per runtime.</b> Each basic runtime, runtime cluster or cloud attachment it's deployed to needs its own licence. A cluster counts once, whatever its node count.</li>
+      <li><b>Copies count.</b> Two connection components to the same system (different credentials, or a copied connection) are two licences.</li>
+      <li><b>Test is separate.</b> Connections in test environments use <b>Test</b> licences. The Base/Standard edition is production only.</li>
+      <li><b>Classes.</b> Most connectors are <b>Standard</b>. SAP and Oracle E-Business are <b>Enterprise</b>. QuickBooks and Sage 50 are <b>Small Business</b>. Each trading partner component is one <b>Trading Partner</b> licence, however many communication methods it has.</li>
+      <li><b>Not licensed.</b> Boomi connectors such as Web Services Server, Event Streams, Data Hub, Flow Services Server, Atom Queue, Boomi MFT, Boomi for SAP and AS2 Shared Server can be deployed an unlimited number of times.</li>
+      <li><b>Counted at deployment.</b> Connections in the Build tab don't count until a process using them is deployed.</li>
+    </ul>
+    <h3>Boomi's worked examples</h3>
+    <table class="g-tbl">${ex.map(([a,b])=>`<tr><td>${a}</td><td class="r">${b} licences</td></tr>`).join('')}</table>
+    <h3>What each input means</h3>
+    <table class="g-tbl g-fields">${CONN_FIELDS.filter(f=>f.tip).map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.tip)}</td></tr>`).join('')}</table>
+    <h3>Tips</h3>
+    <ul class="g-tips">
+      <li>List <b>endpoints</b>, not interfaces. Five interfaces into one SAP system is still one SAP connection.</li>
+      <li>Count a cloud attachment as one runtime. If the customer runs both a cloud attachment and an on-prem runtime, the same connection deployed to both is 2.</li>
+      <li>Platform services such as API Management, Flow, Event Streams, Data Hub and Agentstudio are licensed separately from connections. Tick them under Platform fit.</li>
+    </ul>
+    <p class="g-note">Source: Boomi Help, Platform › Licensing and Integration editions. Edition inclusions are editable under "Edition inclusions". Estimate only, not an official Boomi document.</p>
+    <div class="g-actions"><button class="btn primary-btn" data-closeguide>Got it</button></div>`;
+}
