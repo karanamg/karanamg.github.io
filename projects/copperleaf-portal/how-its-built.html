@@ -1,0 +1,147 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it's built · Copperleaf Provisions — Operations Portal</title><style>
+:root { --ink:#17201c; --ink-2:#4a5550; --muted:#6d7873; --line:#e3e7e4; --bg:#f5f6f3; --forest:#1f3d34; --copper:#b8692e; --gold:#e0a458; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+body { margin: 0; font: 15.5px/1.65 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+a { color: var(--copper); text-decoration: none; } a:hover { text-decoration: underline; }
+.hero { background: radial-gradient(900px 340px at 85% -20%, #2f5a4c 0%, transparent 60%), linear-gradient(160deg, #142b25, #1f3d34); color: #fff; padding: 34px 0 30px; }
+.wrap { max-width: 900px; margin: 0 auto; padding: 0 28px; }
+.hero-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 28px; align-items: center; }
+.kicker { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+.hero h1 { font-size: clamp(24px, 3.4vw, 32px); line-height: 1.18; margin: 8px 0 12px; letter-spacing: -.015em; }
+.hero p { color: #d3e2dc; margin: 0 0 14px; font-size: 15px; }
+.hero ul { margin: 0 0 14px; padding-left: 18px; color: #e8f0ec; font-size: 14px; display: grid; gap: 4px; }
+.shot { border-radius: 12px; overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.15); aspect-ratio: 16/10; background: #0f221d center top / cover no-repeat; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 12px; background: rgba(255,255,255,.12); border-radius: 6px; padding: 2px 9px; color: #eef4f1; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.cta a { display: inline-flex; align-items: center; gap: 6px; border-radius: 9px; padding: 8px 14px; font-weight: 600; font-size: 13.5px; border: 1px solid rgba(255,255,255,.28); color: #fff; }
+.cta a.primary { background: var(--copper); border-color: var(--copper); }
+.cta a:hover { text-decoration: none; filter: brightness(1.08); }
+nav.toc { position: sticky; top: 0; z-index: 5; background: rgba(245,246,243,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+nav.toc .wrap { display: flex; gap: 6px; overflow-x: auto; padding-top: 10px; padding-bottom: 10px; scrollbar-width: none; }
+nav.toc a { flex: none; font-size: 13px; color: var(--ink-2); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; }
+nav.toc a:hover, nav.toc a.on { color: #fff; background: var(--forest); border-color: var(--forest); text-decoration: none; }
+main { padding: 26px 0 60px; }
+.doc > p:first-child { font-size: 16.5px; color: var(--ink-2); }
+.doc h2 { font-size: 21px; color: var(--forest); margin: 34px 0 10px; padding-top: 4px; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
+.doc h2::before { content: ""; width: 6px; height: 22px; border-radius: 3px; background: linear-gradient(var(--gold), var(--copper)); }
+.doc h3 { font-size: 16.5px; color: var(--copper); margin: 22px 0 6px; }
+.doc section { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 4px 24px 18px; margin: 18px 0; box-shadow: 0 1px 2px rgba(16,32,27,.04), 0 8px 24px rgba(16,32,27,.05); }
+.doc section > h2 { margin-top: 18px; }
+.doc ul, .doc ol { padding-left: 22px; } .doc li { margin: 3px 0; }
+.doc code { font: 13px/1.5 "SF Mono", Menlo, Consolas, monospace; background: #f0f2ef; border-radius: 5px; padding: 1px 5px; }
+.doc pre { background: #142b25; color: #e4eee9; border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
+.doc pre code { background: none; padding: 0; color: inherit; font-size: 12.5px; line-height: 1.55; }
+.tbl { overflow-x: auto; margin: 10px 0 14px; border: 1px solid var(--line); border-radius: 10px; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.doc th { text-align: left; background: #f0f3f1; color: var(--forest); padding: 9px 12px; font-weight: 700; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.doc td { border-bottom: 1px solid var(--line); padding: 9px 12px; vertical-align: top; }
+.doc tr:last-child td { border-bottom: none; }
+.doc blockquote { margin: 10px 0; padding: 8px 14px; border-left: 3px solid var(--gold); background: #faf1e9; color: var(--ink-2); border-radius: 0 8px 8px 0; }
+.foot { color: var(--muted); font-size: 13px; padding: 18px 0 40px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .hero-grid { grid-template-columns: 1fr; } .shot { order: -1; }
+  .wrap { padding: 0 18px; } .doc section { padding: 2px 16px 14px; } body { font-size: 15px; }
+}
+</style></head><body>
+<header class="hero"><div class="wrap hero-grid">
+  <div><div class="kicker">How it's built</div><h1>Copperleaf Provisions — Operations Portal</h1><p>A sales and master-data portal for a fictitious fine-food wholesaler. Every screen is backed by Boomi real-time APIs that call the Northwind OData V2 service: a KPI dashboard with charts, orders with printable invoices, product order insight, customers, suppliers and employees.</p>
+    <ul><li>8 REST routes on one Boomi API Service, each a listener + testable subprocess</li><li>Dashboard process fans out to 11 OData queries with a Branch step</li><li>Runs live: GitHub Pages front end calls a Railway-hosted gateway that holds the Boomi credentials</li></ul>
+    <div class="tags"><span class="tag">Boomi</span><span class="tag">API Management</span><span class="tag">OData</span><span class="tag">JavaScript</span><span class="tag">Dashboard</span></div>
+    <div class="cta"><a class="primary" href="https://karanamg.github.io/projects/copperleaf-portal/" target="_blank" rel="noopener">Open demo →</a><a href="https://github.com/karanamg/karanamg.github.io/tree/main/projects/copperleaf-portal" target="_blank" rel="noopener">Source code ↗</a><a href="how-its-built.pdf" download="copperleaf-portal-how-its-built.pdf">Download PDF</a></div></div>
+  <div class="shot" style="background-image:url('thumbnail.jpg')" role="img" aria-label="Screenshot"></div>
+</div></header>
+<nav class="toc"><div class="wrap"><a href="#architecture">Architecture</a><a href="#hosting-github-pages-railway">Hosting: GitHub Pages + Railway</a><a href="#run-it-live-locally">Run it live locally</a><a href="#snapshot-notes">Snapshot notes</a></div></nav>
+<main class="wrap"><div class="doc"><section class="intro"><p><strong>Live demo:</strong> <a href="https://karanamg.github.io/projects/copperleaf-portal/" target="_blank" rel="noopener">https://karanamg.github.io/projects/copperleaf-portal/</a></p>
+<p>Copperleaf Provisions is a made-up fine-food wholesaler. This sales and master-data portal is backed by <strong>Boomi real-time APIs</strong>, which call the public <strong>Northwind OData V2</strong> service.</p>
+<p>Pages: <strong>Dashboard</strong> (KPIs and charts) · <strong>Orders &amp; Invoices</strong> (printable invoices) · <strong>Order Insight</strong> (every order line for a product) · <strong>Products</strong> · <strong>Customers</strong> · <strong>Suppliers</strong> · <strong>Employees</strong>.</p>
+</section><section id="architecture"><h2>Architecture</h2><pre><code>Browser (index.html · app.js · app.css)
+   │  api/*            ── live mode ──▶  gateway/server.js (holds Boomi credentials in gateway/.env)
+   │                                         │  Basic auth
+   │                                         ▼
+   │                              Boomi API Service &quot;NWPortal Order Lookup API&quot;  (/ws/rest/nwportal/v1)
+   │                                         │  listener process → [SUB] process → REST connector
+   │                                         ▼
+   │                              Northwind OData V2 (services.odata.org)
+   │
+   └─ data/*.json      ── snapshot mode (GitHub Pages) ── responses captured from the same Boomi APIs
+</code></pre>
+<p>When the page loads it checks <code>api/health</code>. If the gateway answers, every request is a live Boomi call. Otherwise, for example on GitHub Pages, the portal uses <code>data/</code>: a snapshot captured from the live Boomi APIs (see <code>data/meta.json</code> for the capture time and the number of calls). In snapshot mode the client re-applies each route&#39;s search, filter and paging rules. The <strong>Boomi activity</strong> drawer shows which mode answered each request.</p>
+<div class="tbl"><table><thead><tr>
+<th>Route</th>
+<th>Boomi listener → subprocess</th>
+<th>Northwind source</th>
+</tr>
+</thead><tbody><tr>
+<td><code>GET v1/dashboard</code></td>
+<td>NWPortal API Get Dashboard → [SUB] NWPortal Get Dashboard</td>
+<td>Branch fan-out: 9× <code>$count</code>, <code>Category_Sales_for_1997</code>, <code>Product_Sales_for_1997</code></td>
+</tr>
+<tr>
+<td><code>GET v1/orders?search=&amp;customerId=&amp;skip=</code></td>
+<td>NWPortal API Get Orders</td>
+<td><code>/Orders</code> + Customer, Employee, Shipper, Order_Details</td>
+</tr>
+<tr>
+<td><code>GET v1/invoices/{orderId}</code></td>
+<td>NWPortal API Get Invoice by Order</td>
+<td><code>/Invoices</code> view</td>
+</tr>
+<tr>
+<td><code>GET v1/orderlines/{productId}</code></td>
+<td>NWPortal API Get Order Lines by Product</td>
+<td><code>/Order_Details</code> + Order/Customer, Product</td>
+</tr>
+<tr>
+<td><code>GET v1/products?search=&amp;category=&amp;supplier=&amp;skip=</code></td>
+<td>NWPortal API Search Products</td>
+<td><code>/Products</code> + Category, Supplier</td>
+</tr>
+<tr>
+<td><code>GET v1/customers?search=&amp;skip=</code></td>
+<td>NWPortal API Get Customers</td>
+<td><code>/Customers</code></td>
+</tr>
+<tr>
+<td><code>GET v1/suppliers?search=</code></td>
+<td>NWPortal API Get Suppliers</td>
+<td><code>/Suppliers</code></td>
+</tr>
+<tr>
+<td><code>GET v1/employees</code></td>
+<td>NWPortal API Get Employees</td>
+<td><code>/Employees</code> + manager</td>
+</tr>
+</tbody></table></div><p>The Boomi build follows a pattern of thin listener wrappers around testable <code>[SUB]</code> processes. It uses JSON profiles and maps to turn OData responses into clean API JSON, and <code>$filter</code> expressions built in Set Properties steps, so no Decision branching is needed.</p>
+</section><section id="hosting-github-pages-railway"><h2>Hosting: GitHub Pages + Railway</h2><ul>
+<li><strong>GitHub Pages</strong> serves the front end. <code>config.js</code> points it at the hosted gateway (<code>RAILWAY_GATEWAY</code>).</li>
+<li><strong>Railway</strong> runs <code>gateway/server.js</code>, which serves the same front end and proxies <code>/api/*</code> to Boomi. The Boomi credentials are Railway <strong>variables</strong>, never committed. CORS allows only the origins listed in <code>ALLOWED_ORIGINS</code>, and a per-client rate limit (<code>RATE_LIMIT_PER_MIN</code>, default 90) protects the Boomi runtime.</li>
+<li>If the gateway or Boomi can&#39;t be reached, the portal quietly answers from <code>data/</code>. The Boomi activity panel marks those responses as a &quot;cached copy&quot;.</li>
+</ul>
+<p>Railway service settings: <strong>Root directory</strong> <code>projects/copperleaf-portal</code> (start command and health check come from <code>railway.json</code>). Variables:</p>
+<pre><code>SERVER_BASE_URL=https://&lt;runtime host&gt;
+SERVER_AUTH_TYPE=basic
+SERVER_USERNAME=&lt;shared web server user&gt;
+SERVER_TOKEN=&lt;token&gt;
+ALLOWED_ORIGINS=https://karanamg.github.io
+</code></pre>
+</section><section id="run-it-live-locally"><h2>Run it live locally</h2><p>You need access to a Boomi runtime where these APIs are deployed.</p>
+<pre><code class="language-bash">cd projects/copperleaf-portal/gateway
+cp .env.example .env        # fill in the runtime&#39;s shared web server user + token
+npm start                   # node --use-system-ca server.js  →  http://localhost:8080
+</code></pre>
+<p>Refresh the snapshot (with the gateway running): <code>npm run capture</code>.</p>
+</section><section id="snapshot-notes"><h2>Snapshot notes</h2><ul>
+<li>132 Boomi API calls captured 91 customers, 77 products, 29 suppliers, 9 employees, 830 orders and 2,155 order lines.</li>
+<li>Invoices in the snapshot are composed from the captured orders, order lines and customers. Ship-to street addresses are not part of those payloads, so snapshot invoices show the ship-to name, city and country.</li>
+</ul>
+</section></div>
+<div class="foot"><span>Copperleaf Provisions — Operations Portal</span><a href="https://karanamg.github.io/" target="_top">karanamg.github.io ↗</a></div></main>
+<script>
+// highlight the section in view
+const links = [...document.querySelectorAll('nav.toc a')];
+const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) links.forEach((a) => a.classList.toggle('on', a.hash === '#' + e.target.id)); }), { rootMargin: '-30% 0px -60% 0px' });
+document.querySelectorAll('.doc section[id]').forEach((s) => io.observe(s));
+</script></body></html>

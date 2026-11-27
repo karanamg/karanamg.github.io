@@ -27,7 +27,8 @@
       ],
       "date": "2026-11",
       "status": "Live (static, no backend)",
-      "doc": "projects/platform-message-estimator/how-its-built.pdf"
+      "doc": "projects/platform-message-estimator/how-its-built.html",
+      "pdf": "projects/platform-message-estimator/how-its-built.pdf"
     },
     {
       "slug": "teras-agent-bridge",
@@ -51,7 +52,8 @@
       ],
       "date": "2026-11",
       "status": "Live demo (Railway gateway, cloud runtime)",
-      "doc": "projects/teras-agent-bridge/how-its-built.pdf"
+      "doc": "projects/teras-agent-bridge/how-its-built.html",
+      "pdf": "projects/teras-agent-bridge/how-its-built.pdf"
     },
     {
       "slug": "three-way-match",
@@ -74,7 +76,8 @@
       ],
       "date": "2026-11",
       "status": "Live demo (Railway gateway)",
-      "doc": "projects/three-way-match/how-its-built.pdf"
+      "doc": "projects/three-way-match/how-its-built.html",
+      "pdf": "projects/three-way-match/how-its-built.pdf"
     },
     {
       "slug": "copperleaf-portal",
@@ -97,7 +100,8 @@
       ],
       "date": "2026-11",
       "status": "Live demo",
-      "doc": "projects/copperleaf-portal/how-its-built.pdf"
+      "doc": "projects/copperleaf-portal/how-its-built.html",
+      "pdf": "projects/copperleaf-portal/how-its-built.pdf"
     }
   ]
 }

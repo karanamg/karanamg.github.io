@@ -1,0 +1,124 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it's built · Boomi Platform Message Estimator (presales sizing tool)</title><style>
+:root { --ink:#17201c; --ink-2:#4a5550; --muted:#6d7873; --line:#e3e7e4; --bg:#f5f6f3; --forest:#1f3d34; --copper:#b8692e; --gold:#e0a458; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+body { margin: 0; font: 15.5px/1.65 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+a { color: var(--copper); text-decoration: none; } a:hover { text-decoration: underline; }
+.hero { background: radial-gradient(900px 340px at 85% -20%, #2f5a4c 0%, transparent 60%), linear-gradient(160deg, #142b25, #1f3d34); color: #fff; padding: 34px 0 30px; }
+.wrap { max-width: 900px; margin: 0 auto; padding: 0 28px; }
+.hero-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 28px; align-items: center; }
+.kicker { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+.hero h1 { font-size: clamp(24px, 3.4vw, 32px); line-height: 1.18; margin: 8px 0 12px; letter-spacing: -.015em; }
+.hero p { color: #d3e2dc; margin: 0 0 14px; font-size: 15px; }
+.hero ul { margin: 0 0 14px; padding-left: 18px; color: #e8f0ec; font-size: 14px; display: grid; gap: 4px; }
+.shot { border-radius: 12px; overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.15); aspect-ratio: 16/10; background: #0f221d center top / cover no-repeat; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 12px; background: rgba(255,255,255,.12); border-radius: 6px; padding: 2px 9px; color: #eef4f1; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.cta a { display: inline-flex; align-items: center; gap: 6px; border-radius: 9px; padding: 8px 14px; font-weight: 600; font-size: 13.5px; border: 1px solid rgba(255,255,255,.28); color: #fff; }
+.cta a.primary { background: var(--copper); border-color: var(--copper); }
+.cta a:hover { text-decoration: none; filter: brightness(1.08); }
+nav.toc { position: sticky; top: 0; z-index: 5; background: rgba(245,246,243,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+nav.toc .wrap { display: flex; gap: 6px; overflow-x: auto; padding-top: 10px; padding-bottom: 10px; scrollbar-width: none; }
+nav.toc a { flex: none; font-size: 13px; color: var(--ink-2); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; }
+nav.toc a:hover, nav.toc a.on { color: #fff; background: var(--forest); border-color: var(--forest); text-decoration: none; }
+main { padding: 26px 0 60px; }
+.doc > p:first-child { font-size: 16.5px; color: var(--ink-2); }
+.doc h2 { font-size: 21px; color: var(--forest); margin: 34px 0 10px; padding-top: 4px; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
+.doc h2::before { content: ""; width: 6px; height: 22px; border-radius: 3px; background: linear-gradient(var(--gold), var(--copper)); }
+.doc h3 { font-size: 16.5px; color: var(--copper); margin: 22px 0 6px; }
+.doc section { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 4px 24px 18px; margin: 18px 0; box-shadow: 0 1px 2px rgba(16,32,27,.04), 0 8px 24px rgba(16,32,27,.05); }
+.doc section > h2 { margin-top: 18px; }
+.doc ul, .doc ol { padding-left: 22px; } .doc li { margin: 3px 0; }
+.doc code { font: 13px/1.5 "SF Mono", Menlo, Consolas, monospace; background: #f0f2ef; border-radius: 5px; padding: 1px 5px; }
+.doc pre { background: #142b25; color: #e4eee9; border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
+.doc pre code { background: none; padding: 0; color: inherit; font-size: 12.5px; line-height: 1.55; }
+.tbl { overflow-x: auto; margin: 10px 0 14px; border: 1px solid var(--line); border-radius: 10px; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.doc th { text-align: left; background: #f0f3f1; color: var(--forest); padding: 9px 12px; font-weight: 700; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.doc td { border-bottom: 1px solid var(--line); padding: 9px 12px; vertical-align: top; }
+.doc tr:last-child td { border-bottom: none; }
+.doc blockquote { margin: 10px 0; padding: 8px 14px; border-left: 3px solid var(--gold); background: #faf1e9; color: var(--ink-2); border-radius: 0 8px 8px 0; }
+.foot { color: var(--muted); font-size: 13px; padding: 18px 0 40px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .hero-grid { grid-template-columns: 1fr; } .shot { order: -1; }
+  .wrap { padding: 0 18px; } .doc section { padding: 2px 16px 14px; } body { font-size: 15px; }
+}
+</style></head><body>
+<header class="hero"><div class="wrap hero-grid">
+  <div><div class="kicker">How it's built</div><h1>Boomi Platform Message Estimator (presales sizing tool)</h1><p>A presales calculator that turns workload inputs (integration interfaces, EDI partners, API calls, Control Plane APIs, event topics, Flow apps, Data Hub golden records, Data Integration pipelines and AI agents) into estimated Boomi Platform Messages per month and per year. It projects volume over the contract term with growth and headroom so the AE can choose the platform, and has a second mode that counts connection licences by connector class.</p>
+    <ul><li>Per-row message math with hover explanations and editable conversion rates</li><li>Data Integration BDU builder, one-time initial loads, Control Plane and Agentstudio sizing</li><li>Save/open scenarios as JSON, export CSV, print a PDF summary; runs fully in the browser</li></ul>
+    <div class="tags"><span class="tag">Boomi</span><span class="tag">Presales</span><span class="tag">Sizing</span><span class="tag">JavaScript</span></div>
+    <div class="cta"><a class="primary" href="https://karanamg.github.io/projects/platform-message-estimator/public/" target="_blank" rel="noopener">Open demo →</a><a href="https://github.com/karanamg/karanamg.github.io/tree/main/projects/platform-message-estimator" target="_blank" rel="noopener">Source code ↗</a><a href="how-its-built.pdf" download="platform-message-estimator-how-its-built.pdf">Download PDF</a></div></div>
+  <div class="shot" style="background-image:url('thumbnail.jpg')" role="img" aria-label="Screenshot"></div>
+</div></header>
+<nav class="toc"><div class="wrap"><a href="#workflow">Workflow</a><a href="#message-math-defaults-are-editable-under-message-conversion-rates">Message math (defaults are editable under &quot;Message conversion rates&quot;)</a><a href="#connection-based-sizing-sizing-model-connections">Connection-based sizing (Sizing model → Connections)</a></div></nav>
+<main class="wrap"><div class="doc"><section class="intro"><p>A static web app with no build step and no backend. Open <code>index.html</code> in a browser, or host the folder on any static host.</p>
+</section><section id="workflow"><h2>Workflow</h2><ol>
+<li><strong>Opportunity:</strong> enter the customer and context.</li>
+<li><strong>Sizing assumptions:</strong> active days per month, non-prod %, growth, headroom and contract term.</li>
+<li><strong>Workloads per service:</strong> Integration processes, B2B/EDI, API Management, Event Streams, Flow, Data Hub, Data Integration and AI agents.</li>
+<li>The right-hand summary shows messages per month and per year, the term projection, the breakdown, and the volume band. The tool shows message volumes only, with no pricing.</li>
+<li>Save or open scenarios as <code>.json</code>, export a CSV, or Print / PDF for the AE.</li>
+</ol>
+</section><section id="message-math-defaults-are-editable-under-message-conversion-rates"><h2>Message math (defaults are editable under &quot;Message conversion rates&quot;)</h2><div class="tbl"><table><thead><tr>
+<th>Service</th>
+<th>Rule</th>
+</tr>
+</thead><tbody><tr>
+<td>Integration</td>
+<td>One-time initial load records count in Year 1 only. docs/mo = ceil(records ÷ records-per-doc) × runs/mo. Messages per doc = reads + writes × (2 if req/resp) + lookups × 2, plus retry %</td>
+</tr>
+<tr>
+<td>B2B / EDI</td>
+<td>partners × transactions/mo × docs per transaction (e.g. 850 + 997 + ERP write = 3)</td>
+</tr>
+<tr>
+<td>API Management</td>
+<td>1 call = 1 message</td>
+</tr>
+<tr>
+<td>Event Streams</td>
+<td>(published × (1 + subscribers)) ÷ 100</td>
+</tr>
+<tr>
+<td>Flow</td>
+<td>launches ÷ 100</td>
+</tr>
+<tr>
+<td>Data Hub</td>
+<td>golden records × 12 per year (shown monthly)</td>
+</tr>
+<tr>
+<td>API Control Plane</td>
+<td>managed APIs × 30,000 per year (gross; the edition allowance is netted off by the AE)</td>
+</tr>
+<tr>
+<td>Data Integration</td>
+<td>BDUs × 50. BDUs from the pipeline type: API 0.5 per output table per run, DB/file 1 per 100 MB, log-based CDC 2 per 100 MB, high-frequency API 1 per 100 MB, + logic uplift (default 20%), or known BDUs</td>
+</tr>
+<tr>
+<td>AI agents</td>
+<td>users × sessions/day × prompts/session × working days ÷ 12, × 100</td>
+</tr>
+</tbody></table></div><p>Sources: Boomi defines a Message as one document flowing through any platform service, including response documents from request/response calls. Calls between components in the same account are excluded. The non-Integration equivalents follow Boomi&#39;s published service equivalents. <strong>These are estimates, not an official Boomi document. Confirm them with your Boomi contact.</strong> The volume bands are examples and should be replaced with real tiers. The tool doesn&#39;t recommend a platform or edition. The AE decides that from the message volume.</p>
+</section><section id="connection-based-sizing-sizing-model-connections"><h2>Connection-based sizing (Sizing model → Connections)</h2><p>The header switch toggles between <strong>Platform messages</strong> (usage-based) and <strong>Connections</strong> (connector-based licensing). Both data sets are kept, so you can switch back and forth.</p>
+<p>In Connections mode you list each endpoint (system + credentials) with its connector, class, unique connection count, production and test runtimes, and go-live year. Counting rules come from Boomi Help › Platform › Licensing:</p>
+<ul>
+<li>1 licence = 1 unique connection (component ID) per runtime. A basic runtime, a runtime cluster (whatever its node count) or a cloud attachment each count once.</li>
+<li>Reusing a connection in more processes or operations adds nothing. A copied connection (new component ID) counts again.</li>
+<li>Classes: Standard (most), Enterprise (SAP, Oracle EBS), Small Business (QuickBooks, Sage 50), Trading Partner (1 per trading partner component).</li>
+<li>Test and production licences are separate. Base Edition is production only.</li>
+<li>Unlimited / not licensed: AS2 Shared Server, AtomSphere and Partner API, Atom Queue, Boomi for SAP, Data Hub, Master Data Hub (+ Listener), Boomi MFT, Event Streams, Flow Services Server, MLLP Server, OFTP2 Server, Web Services Server.</li>
+</ul>
+<p>Connections mode shows licence counts only (no edition inclusions or recommendation). Classes for connectors not named in Boomi&#39;s docs default to Standard and should be verified.</p>
+<p>All inputs auto-save to the browser (localStorage).</p>
+</section></div>
+<div class="foot"><span>Boomi Platform Message Estimator (presales sizing tool)</span><a href="https://karanamg.github.io/" target="_top">karanamg.github.io ↗</a></div></main>
+<script>
+// highlight the section in view
+const links = [...document.querySelectorAll('nav.toc a')];
+const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) links.forEach((a) => a.classList.toggle('on', a.hash === '#' + e.target.id)); }), { rootMargin: '-30% 0px -60% 0px' });
+document.querySelectorAll('.doc section[id]').forEach((s) => io.observe(s));
+</script></body></html>
