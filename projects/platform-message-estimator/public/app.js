@@ -386,8 +386,8 @@ function connRecommend(C, fitLvl){
   if(needTest && !DEFAULT_ED_INC[0].test) reasons.push({lvl:1, text:`${fmt(e.test)} test licences needed → test environments start at ${EDITIONS[1]}`});
   if(needEnt) reasons.push({lvl:1, text:`Enterprise-class connectors (${fmt(e.ent.prod)} prod / ${fmt(e.ent.test)} test) → ${EDITIONS[1]}+`});
   reasons.push({lvl, text: covered
-    ? `${fmt(e.std.prod)} prod / ${fmt(e.std.test)} test Standard connections fit ${EDITIONS[lvl]} (${fmt(n(inc[lvl].sp))} / ${fmt(n(inc[lvl].st))} included)`
-    : `${fmt(e.std.prod)} prod / ${fmt(e.std.test)} test Standard connections exceed every edition's inclusion → ${EDITIONS[lvl]} plus additional licences`});
+    ? `${fmt(e.std.prod)} prod / ${fmt(e.std.test)} test Standard-class connectors fit ${EDITIONS[lvl]} Edition (${fmt(n(inc[lvl].sp))} / ${fmt(n(inc[lvl].st))} included)`
+    : `${fmt(e.std.prod)} prod / ${fmt(e.std.test)} test Standard-class connectors exceed every edition's inclusion → ${EDITIONS[lvl]} plus additional licences`});
   if(fitLvl>lvl) reasons.push({lvl:fitLvl, text:`Capability requirements (Platform fit) → ${EDITIONS[fitLvl]}`});
   const final = Math.max(lvl, fitLvl);
   reasons.sort((a,b)=>b.lvl-a.lvl);
@@ -693,7 +693,7 @@ function renderConns(){
   document.getElementById('connTbl').innerHTML = `<thead><tr>${head}</tr></thead><tbody>${S.conns.map(connRowHtml).join('')}</tbody>`;
 }
 function renderEdInc(){
-  document.getElementById('edIncTbl').innerHTML = `<thead><tr><th>Edition</th><th class="r">Standard · prod</th><th class="r">Standard · test</th><th class="r">Enterprise · prod</th><th class="r">Enterprise · test</th></tr></thead><tbody>` +
+  document.getElementById('edIncTbl').innerHTML = `<thead><tr><th>Edition</th><th class="r">Standard connectors · prod</th><th class="r">Standard connectors · test</th><th class="r">Enterprise connectors · prod</th><th class="r">Enterprise connectors · test</th></tr></thead><tbody>` +
     EDITIONS.map((e,i)=>`<tr><td>${esc(e)}</td>${['sp','st','ep','et'].map(k=>`<td style="width:130px"><input class="in" type="number" min="0" step="1" data-edinc="${i}" data-ek="${k}" value="${esc(S.edInc[i][k])}"></td>`).join('')}</tr>`).join('') + '</tbody>';
 }
 function setMode(m){
@@ -740,7 +740,7 @@ function updateConns(R){
   document.getElementById('cProjLabels').innerHTML = C.proj.map(p=>`<div>Year ${p.year}</div>`).join('');
 
   // breakdown
-  document.getElementById('cSumTbl').innerHTML = `<thead><tr><th>Class</th><th class="r">Prod</th><th class="r">Test</th><th class="r">Total</th></tr></thead><tbody>
+  document.getElementById('cSumTbl').innerHTML = `<thead><tr><th>Connector class</th><th class="r">Prod</th><th class="r">Test</th><th class="r">Total</th></tr></thead><tbody>
     ${CLASS_ORDER.map(c=>`<tr><td>${esc(CONN_CLASSES[c].label)}</td><td class="r">${fmt(y1[c].prod)}</td><td class="r">${fmt(y1[c].test)}</td><td class="r">${fmt(y1[c].prod+y1[c].test)}</td></tr>`).join('')}
     <tr class="tot"><td>Year 1</td><td class="r">${fmt(y1.prod)}</td><td class="r">${fmt(y1.test)}</td><td class="r">${fmt(y1.prod+y1.test)}</td></tr>
     ${C.years>1?`<tr class="tot"><td>Year ${C.years} (end of term)</td><td class="r">${fmt(e.prod)}</td><td class="r">${fmt(e.test)}</td><td class="r">${fmt(e.prod+e.test)}</td></tr>`:''}
@@ -751,10 +751,10 @@ function updateConns(R){
   const rec = connRecommend(C, fitLvl);
   document.getElementById('cEdBar').innerHTML = EDITIONS.map((ed,i)=>`<div class="${i===rec.lvl?'rec':i>rec.lvl?'':'on'}">${esc(ed)}</div>`).join('');
   document.getElementById('cEdReasons').innerHTML = rec.reasons.map(r=>`<li>${esc(r.text)}</li>`).join('');
-  setText('cCovTitle', `${EDITIONS[rec.lvl]}: included vs required (end of term)`);
+  setText('cCovTitle', `${EDITIONS[rec.lvl]} Edition: connection licences included vs required (end of term)`);
   const covRows = rec.cov.filter(c=>c.req||c.incl);
-  document.getElementById('cCovTbl').innerHTML = `<thead><tr><th>Licence</th><th class="r">Required</th><th class="r">Included</th><th class="r">Additional</th></tr></thead><tbody>
-    ${covRows.length ? covRows.map(c=>`<tr><td>${esc(c.c)} · ${c.env}</td><td class="r">${fmt(c.req)}</td><td class="r">${fmt(c.incl)}</td><td class="r"${c.add?' style="font-weight:700;color:var(--brand-2)"':''}>${c.add?'+'+fmt(c.add):'0'}</td></tr>`).join('') : '<tr><td colspan="4" style="color:var(--text-muted)">Add connections on the left.</td></tr>'}
+  document.getElementById('cCovTbl').innerHTML = `<thead><tr><th><span class="tip" title="Connector licence class (Standard / Enterprise / Small Business / Trading Partner), not the edition">Connector class licence</span></th><th class="r">Required</th><th class="r">Included</th><th class="r">Additional</th></tr></thead><tbody>
+    ${covRows.length ? covRows.map(c=>`<tr><td>${esc(c.c)} connectors · ${c.env}</td><td class="r">${fmt(c.req)}</td><td class="r">${fmt(c.incl)}</td><td class="r"${c.add?' style="font-weight:700;color:var(--brand-2)"':''}>${c.add?'+'+fmt(c.add):'0'}</td></tr>`).join('') : '<tr><td colspan="4" style="color:var(--text-muted)">Add connections on the left.</td></tr>'}
     <tr class="tot"><td>Additional licences</td><td></td><td></td><td class="r">${fmt(rec.cov.reduce((a,c)=>a+c.add,0))}</td></tr></tbody>`;
   const services = recommend(R).services;
   document.getElementById('cSvcChips').innerHTML = [...services].map(([name,on])=>`<span class="chip${on?' on':''}">${on?'✓ ':''}${esc(name)}</span>`).join('');
