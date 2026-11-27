@@ -54,7 +54,7 @@ const PERIOD_OPTS = {hour:'per hour', day:'per day', week:'per week', month:'per
 const SECTIONS = [
   {
     key:'integrations', title:'Integration processes', service:'Integration', rate:'doc', fit:null,
-    help:'Each inbound and outbound document counts as 1 message, including response documents from request/response calls. Calls between components in the same account (for example Integration → Flow) are not counted. Messages per document = <code>source reads + target writes × (2 if req/resp, else 1) + lookups × 2</code>.',
+    help:'Each inbound and outbound document counts as 1 message, including response documents from request/response calls. Calls between components in the same account (for example Integration → Flow) are not counted. Hover over any <b>Messages / mo</b> value to see its calculation. Messages per document = <code>source reads + target writes × (2 if req/resp, else 1) + lookups × 2</code>.',
     fields:[
       {k:'name', label:'Interface', type:'text', def:'New interface'},
       {k:'trigger', label:'Trigger', type:'select', opts:{sched:'Scheduled batch', rt:'Real-time / listener', api:'API-triggered', evt:'Event-driven'}, def:'sched'},
@@ -73,7 +73,19 @@ const SECTIONS = [
       const docs = Math.ceil(n(r.records)/Math.max(1,n(r.batch))) * perMonth(n(r.runs), r.per);
       const per = n(r.reads) + n(r.writes)*(r.resp?2:1) + n(r.lookups)*2;
       const units = docs*per*(1+n(r.retry)/100);
-      return {units, msgs:units*rateMul('doc'), cols:[docs, units*rateMul('doc')]};
+      const msgs = units*rateMul('doc');
+      const docsPerRun = Math.ceil(n(r.records)/Math.max(1,n(r.batch)));
+      const ex = [
+        `<b>Documents / month</b>`,
+        `ceil(${fx(r.records)} records ÷ ${fx(Math.max(1,n(r.batch)))} per doc) = ${fx(docsPerRun)} docs per run`,
+        `× ${pmText(n(r.runs), r.per, 'runs')}`,
+        `= <b>${fmt(docs)}</b> docs`,
+        `<b>Messages / document</b>`,
+        `${fx(r.reads)} read + ${fx(r.writes)} write${r.resp?' × 2 (req/resp)':''} + ${fx(r.lookups)} lookup × 2 = <b>${fx(per)}</b>`,
+        `<b>Messages / month</b>`,
+        `${fx(docs)} docs × ${fx(per)}${n(r.retry)?` × ${fx(1+n(r.retry)/100,2)} (retry ${fx(r.retry)}%)`:''}${rateNote('doc')} = <b>${fmt(msgs)}</b>`,
+      ];
+      return {units, msgs, cols:[docs, msgs], ex};
     },
     sample:[
       {name:'Sales orders: Shopify → SAP S/4', trigger:'rt', records:1, runs:120, per:'hour', batch:1, reads:1, writes:1, resp:true, lookups:2, retry:2},
@@ -96,7 +108,13 @@ const SECTIONS = [
     cols:['Docs / mo','Messages / mo'],
     calc(r){
       const docs = n(r.partners)*perMonth(n(r.txns), r.per)*n(r.docsPer);
-      return {units:docs, msgs:docs*rateMul('edi'), cols:[docs, docs*rateMul('edi')]};
+      const msgs = docs*rateMul('edi');
+      const ex = [
+        `Per partner: ${pmText(n(r.txns), r.per, 'transactions')}`,
+        `× ${fx(r.partners)} partners × ${fx(r.docsPer)} docs per transaction = <b>${fmt(docs)}</b> docs`,
+        `${fx(docs)} docs${rateNote('edi')} = <b>${fmt(msgs)}</b> messages`,
+      ];
+      return {units:docs, msgs, cols:[docs, msgs], ex};
     },
     sample:[
       {name:'Retailers · 850 PO in', partners:12, txns:300, per:'month', docsPer:3},
@@ -116,7 +134,13 @@ const SECTIONS = [
     cols:['Calls / mo','Messages / mo'],
     calc(r){
       const calls = n(r.consumers)*perMonth(n(r.calls), r.per);
-      return {units:calls, msgs:calls*rateMul('api'), cols:[calls, calls*rateMul('api')]};
+      const msgs = calls*rateMul('api');
+      const ex = [
+        `Per consumer: ${pmText(n(r.calls), r.per, 'calls')}`,
+        `× ${fx(r.consumers)} consumers = <b>${fmt(calls)}</b> calls / month`,
+        `${fx(calls)} calls${rateNote('api')} = <b>${fmt(msgs)}</b> messages`,
+      ];
+      return {units:calls, msgs, cols:[calls, msgs], ex};
     },
     sample:[
       {name:'Order status API (mobile app)', consumers:1, calls:6000, per:'day'},
@@ -134,8 +158,15 @@ const SECTIONS = [
     ],
     cols:['Events / mo','Messages / mo'],
     calc(r){
-      const ev = perMonth(n(r.published), r.per)*(1+n(r.subs));
-      return {units:ev, msgs:ev*rateMul('event'), cols:[ev, ev*rateMul('event')]};
+      const pub = perMonth(n(r.published), r.per);
+      const ev = pub*(1+n(r.subs));
+      const msgs = ev*rateMul('event');
+      const ex = [
+        `${pmText(n(r.published), r.per, 'events published')}`,
+        `× (1 publish + ${fx(r.subs)} subscribers) = <b>${fmt(ev)}</b> events`,
+        `${fx(ev)} events${rateNote('event')} = <b>${fmt(msgs)}</b> messages`,
+      ];
+      return {units:ev, msgs, cols:[ev, msgs], ex};
     },
     sample:[{name:'order-events', published:3000, per:'day', subs:3}]
   },
@@ -151,7 +182,13 @@ const SECTIONS = [
     cols:['Launches / mo','Messages / mo'],
     calc(r){
       const l = n(r.users)*perMonth(n(r.launches), r.per);
-      return {units:l, msgs:l*rateMul('flow'), cols:[l, l*rateMul('flow')]};
+      const msgs = l*rateMul('flow');
+      const ex = [
+        `Per user: ${pmText(n(r.launches), r.per, 'launches')}`,
+        `× ${fx(r.users)} users = <b>${fmt(l)}</b> launches / month`,
+        `${fx(l)} launches${rateNote('flow')} = <b>${fmt(msgs)}</b> messages`,
+      ];
+      return {units:l, msgs, cols:[l, msgs], ex};
     },
     sample:[{name:'Returns approval workflow', users:60, launches:40, per:'month'}]
   },
@@ -165,7 +202,12 @@ const SECTIONS = [
     cols:['Records','Messages / mo'],
     calc(r){
       const m = n(r.records)*rateMul('hub')/12;
-      return {units:n(r.records), msgs:m, cols:[n(r.records), m]};
+      const ex = [
+        `${fx(r.records)} golden records${rateNote('hub')} per year`,
+        `= ${fx(n(r.records)*rateMul('hub'))} messages / year`,
+        `÷ 12 months = <b>${fmt(m)}</b> messages / month`,
+      ];
+      return {units:n(r.records), msgs:m, cols:[n(r.records), m], ex};
     },
     sample:[{name:'Customer', records:150000},{name:'Product', records:25000}]
   },
@@ -180,7 +222,12 @@ const SECTIONS = [
     cols:['BDUs / mo','Messages / mo'],
     calc(r){
       const b = perMonth(n(r.bdus), r.per);
-      return {units:b, msgs:b*rateMul('bdu'), cols:[b, b*rateMul('bdu')]};
+      const msgs = b*rateMul('bdu');
+      const ex = [
+        `${pmText(n(r.bdus), r.per, 'BDUs')}`,
+        `${fx(b)} BDUs${rateNote('bdu')} = <b>${fmt(msgs)}</b> messages`,
+      ];
+      return {units:b, msgs, cols:[b, msgs], ex};
     },
     sample:[{name:'SAP + Shopify → Snowflake (CDC)', bdus:30, per:'month'}]
   },
@@ -196,7 +243,13 @@ const SECTIONS = [
     cols:['Prompts / mo','Messages / mo'],
     calc(r){
       const p = perMonth(n(r.convs), r.per)*n(r.prompts);
-      return {units:p, msgs:p*rateMul('ai'), cols:[p, p*rateMul('ai')]};
+      const msgs = p*rateMul('ai');
+      const ex = [
+        `${pmText(n(r.convs), r.per, 'conversations')}`,
+        `× ${fx(r.prompts)} prompts per conversation = <b>${fmt(p)}</b> prompts`,
+        `${fx(p)} prompts${rateNote('ai')} = <b>${fmt(msgs)}</b> messages`,
+      ];
+      return {units:p, msgs, cols:[p, msgs], ex};
     },
     sample:[{name:'Order-status assistant', convs:40, per:'day', prompts:3}]
   },
@@ -242,6 +295,23 @@ function perMonth(v, per){
     default: return v;
   }
 }
+/* "120 per hour × 24 h × 30.4 days = 87,552 runs / month" */
+function pmText(v, per, what){
+  const d = n(S.settings.daysPerMonth) || 30.4;
+  const tot = fx(perMonth(v, per));
+  switch(per){
+    case 'hour':  return `${fx(v)} ${what} per hour × 24 h × ${fx(d,1)} days = ${tot} ${what} / month`;
+    case 'day':   return `${fx(v)} ${what} per day × ${fx(d,1)} days = ${tot} ${what} / month`;
+    case 'week':  return `${fx(v)} ${what} per week × ${fx(d/7,2)} weeks = ${tot} ${what} / month`;
+    case 'year':  return `${fx(v)} ${what} per year ÷ 12 = ${tot} ${what} / month`;
+    default:      return `${fx(v)} ${what} / month`;
+  }
+}
+function rateNote(key){
+  const d = DEFAULT_RATES[key], v = n(S.rates[key]);
+  if(d.mode==='every') return ` ÷ ${fx(v)}`;
+  return v===1 ? '' : ` × ${fx(v,2)} per unit`;
+}
 /* messages per unit */
 function rateMul(key){
   const def = DEFAULT_RATES[key]; const v = n(S.rates[key]);
@@ -253,6 +323,7 @@ function rateMul(key){
 const NF0 = new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
 const NFc = new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1});
 const fmt = v => NF0.format(Math.round(v));
+const fx = (v, dp=2) => new Intl.NumberFormat('en-US',{maximumFractionDigits:dp}).format(Number(v)||0);
 const fmtc = v => v<10000 ? NF0.format(Math.round(v)) : NFc.format(v);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -308,7 +379,7 @@ function renderSections(){
   const host = document.getElementById('sections');
   host.innerHTML = SECTIONS.map(sec=>{
     const head = sec.fields.map(f=>`<th${f.type==='num'?' class="r"':''}>${f.tip?`<span class="tip" title="${esc(f.tip)}">${esc(f.label)}</span>`:esc(f.label)}</th>`).join('')
-      + sec.cols.map(c=>`<th class="r">${esc(c)}</th>`).join('') + '<th></th>';
+      + sec.cols.map((c,i)=>`<th class="r${i===sec.cols.length-1?' msgs-h':''}">${esc(c)}</th>`).join('') + '<th class="del-h"></th>';
     const body = S[sec.key].map(r=>rowHtml(sec,r)).join('');
     const collapsed = S.collapsed['card-'+sec.key] ?? (S[sec.key].length===0 && sec.key!=='integrations');
     return `<div class="card${collapsed?' collapsed':''}${S[sec.key].length?'':' empty'}" id="card-${sec.key}">
@@ -336,7 +407,7 @@ function rowHtml(sec, r){
     return `<td${f.type==='check'?' style="text-align:center"':''}>${inp}</td>`;
   }).join('');
   const calc = sec.cols.map((c,i)=>`<td class="calc${i===sec.cols.length-1?' msgs':''}" data-c="${i}"></td>`).join('');
-  return `<tr data-id="${r.id}">${cells}${calc}<td><button class="icon-btn" data-del="${r.id}" title="Remove row">×</button></td></tr>`;
+  return `<tr data-id="${r.id}">${cells}${calc}<td class="del"><button class="icon-btn" data-del="${r.id}" title="Remove row">×</button></td></tr>`;
 }
 
 function rateText(key){
@@ -389,6 +460,8 @@ function update(){
     s.rows.forEach(r=>{
       const tr = tbl.querySelector(`tr[data-id="${r.id}"]`); if(!tr) return;
       r.cols.forEach((v,i)=>{ tr.querySelector(`td[data-c="${i}"]`).textContent = fmt(v); });
+      const mc = tr.querySelector('td.calc.msgs');
+      if(mc && r.ex){ mc.dataset.tip = `<div class="tip-title">How this is calculated</div>` + r.ex.map(l=>`<div class="tip-line">${l}</div>`).join(''); }
     });
     const tot = document.getElementById('tot-'+s.sec.key);
     tot.innerHTML = s.rows.length ? `${fmt(s.msgs)} <small>msg / mo</small>` : '<small>not in scope</small>';

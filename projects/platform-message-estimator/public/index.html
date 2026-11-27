@@ -65,7 +65,11 @@ table.rows th .tip{cursor:help;border-bottom:1px dotted var(--text-muted)}
 table.rows td{padding:5px 6px;border-bottom:1px solid var(--grid);vertical-align:middle}
 table.rows td.calc{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;color:var(--text-secondary)}
 table.rows td.calc.msgs{color:var(--text-primary);font-weight:700}
+table.rows td.calc.msgs span,table.rows td.calc.msgs{cursor:help;text-decoration:underline dotted var(--text-muted);text-underline-offset:3px}
 table.rows th.r{text-align:right}
+/* keep the result columns visible when the inputs scroll sideways */
+table.rows td.calc.msgs,table.rows th.msgs-h{position:sticky;right:30px;background:var(--surface-1);z-index:1;box-shadow:-8px 0 8px -8px rgba(16,30,54,.18)}
+table.rows td.del,table.rows th.del-h{position:sticky;right:0;background:var(--surface-1);z-index:1;width:30px}
 input.in,select.in{width:100%;min-width:56px;background:var(--input-bg);border:1px solid var(--border-strong);border-radius:6px;padding:5px 7px;font-size:13px}
 input.in[type=number]{text-align:right;font-variant-numeric:tabular-nums}
 input.in.txt{min-width:150px}
@@ -146,7 +150,10 @@ ul.reasons li{margin:2px 0}
 .warnbox{display:flex;gap:8px;background:var(--accent-bg);border:1px solid var(--brand-2);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text-secondary);margin:0 0 12px}
 .warnbox b{color:var(--text-primary)}
 
-.tooltip{position:fixed;pointer-events:none;background:#0f1e36;color:#fff;padding:7px 10px;border-radius:6px;font-size:12px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:50;display:none;max-width:280px}
+.tooltip{position:fixed;pointer-events:none;background:#0f1e36;color:#fff;padding:7px 10px;border-radius:6px;font-size:12px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:50;display:none;max-width:460px}
+.tooltip .tip-title{font-size:11px;text-transform:uppercase;letter-spacing:.4px;opacity:.7;margin-bottom:4px}
+.tooltip .tip-line{font-variant-numeric:tabular-nums}
+.tooltip .tip-line b{color:#9fd0ff}
 .tooltip b{font-weight:700}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f1e36;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;z-index:60;pointer-events:none}
 .toast.show{opacity:1}
