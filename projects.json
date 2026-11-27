@@ -8,6 +8,28 @@
   },
   "projects": [
     {
+      "slug": "platform-message-estimator",
+      "title": "Boomi Platform Message Estimator (presales sizing tool)",
+      "summary": "A presales calculator that turns workload inputs (integration interfaces, EDI partners, API calls, event topics, Flow apps, Data Hub golden records, ELT pipelines and AI agents) into estimated Boomi Platform Messages per month and per year. It projects volume over the contract term with growth and headroom, and suggests the minimum Integration edition and the platform services in scope for the AE conversation.",
+      "highlights": [
+        "Per-row message math with editable conversion rates and volume bands",
+        "Capability checklist maps requirements to the minimum Integration edition",
+        "Save/open scenarios as JSON, export CSV, print a PDF summary; runs fully in the browser"
+      ],
+      "path": "projects/platform-message-estimator/public/",
+      "thumbnail": "projects/platform-message-estimator/thumbnail.jpg",
+      "source": "https://github.com/karanamg/karanamg.github.io/tree/main/projects/platform-message-estimator",
+      "tags": [
+        "Boomi",
+        "Presales",
+        "Pricing",
+        "Sizing",
+        "JavaScript"
+      ],
+      "date": "2026-11",
+      "status": "Live (static, no backend)"
+    },
+    {
       "slug": "aras-ai-data-hub",
       "title": "Integrasi Connect - Embedded AI Data Hub (Boomi OEM demo)",
       "summary": "A white-label, multi-tenant portal where each customer connects SAP, Salesforce, file drops and Malaysian government open data, maps fields onto an AI knowledge document, and runs one configuration-driven Boomi pipeline that masks personal data and chunks content for RAG. Includes a live Boomi run view, AI knowledge search with citations and a composable API catalogue.",

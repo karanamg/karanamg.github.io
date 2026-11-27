@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boomi Platform Message Estimator · Presales</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f6fa; --surface-1:#ffffff; --surface-2:#f7f9fc; --border:#dde3ec; --border-strong:#c4cdd9;
+  --text-primary:#191919; --text-secondary:#5d6570; --text-muted:#8a929c;
+  --brand:#12284b; --brand-2:#0073dc; --accent-bg:#eaf3ff;
+  --series-1:#257de0; --grid:#e8ecf2;
+  --good:#0aac23; --good-text:#006c10; --warning:#fbb315; --critical:#dc3c3d;
+  --input-bg:#ffffff;
+  --shadow:0 1px 2px rgba(16,30,54,.06),0 2px 8px rgba(16,30,54,.05);
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111315; --surface-1:#191919; --surface-2:#202326; --border:#2f343a; --border-strong:#41474f;
+  --text-primary:#efefef; --text-secondary:#9c9c9c; --text-muted:#7b8088;
+  --brand:#cfe0ff; --brand-2:#338ced; --accent-bg:#1b2a40;
+  --series-1:#338ced; --grid:#2a2e33;
+  --good-text:#0aac23;
+  --input-bg:#141618;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;font-size:14px;line-height:1.45;background:var(--bg);color:var(--text-primary)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--brand-2)}
+
+/* header */
+.topbar{background:#12284b;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.topbar h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.2px}
+.topbar .sub{font-size:12px;opacity:.75}
+.topbar .spacer{flex:1}
+.tb-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px}
+.tb-btn:hover{background:rgba(255,255,255,.2)}
+.tb-btn.primary{background:#0073dc;border-color:#0073dc}
+.tb-btn.primary:hover{background:#1a84e8}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;padding:20px 24px 60px;max-width:1720px;margin:0 auto}
+@media (max-width:1180px){.layout{grid-template-columns:1fr}.summary-col{position:static!important}}
+
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);margin-bottom:16px}
+.card-h{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.card-h h2{font-size:15px;margin:0;color:var(--brand);font-weight:700}
+.card-h .badge{font-size:12px;color:var(--text-secondary);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.card-h .total{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.card-h .total small{font-weight:400;color:var(--text-secondary)}
+.card-h .chev{transition:transform .15s;color:var(--text-muted)}
+.card.collapsed .chev{transform:rotate(-90deg)}
+.card.collapsed .card-b{display:none}
+.card-b{padding:12px 16px 16px}
+.help{font-size:12.5px;color:var(--text-secondary);margin:0 0 10px}
+.help code{background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:12px}
+
+/* tables */
+.tbl-wrap{overflow-x:auto}
+table.rows{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+table.rows th{font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--text-secondary);font-weight:600;text-align:left;padding:6px 6px;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:bottom}
+table.rows th .tip{cursor:help;border-bottom:1px dotted var(--text-muted)}
+table.rows td{padding:5px 6px;border-bottom:1px solid var(--grid);vertical-align:middle}
+table.rows td.calc{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;color:var(--text-secondary)}
+table.rows td.calc.msgs{color:var(--text-primary);font-weight:700}
+table.rows th.r{text-align:right}
+input.in,select.in{width:100%;min-width:56px;background:var(--input-bg);border:1px solid var(--border-strong);border-radius:6px;padding:5px 7px;font-size:13px}
+input.in[type=number]{text-align:right;font-variant-numeric:tabular-nums}
+input.in.txt{min-width:150px}
+table.rows input.in[type=number]{min-width:56px;max-width:96px}
+table.rows input.in[data-f=records],table.rows input.in[data-f=published],table.rows input.in[data-f=calls]{min-width:78px}
+table.rows select.in{min-width:96px;padding-right:2px}
+table.rows td{padding:5px 4px}
+table.rows th{padding:6px 4px;white-space:normal;min-width:0}
+input.in:focus,select.in:focus,textarea.in:focus{outline:2px solid var(--brand-2);outline-offset:0;border-color:transparent}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--brand-2)}
+.icon-btn{background:none;border:1px solid transparent;border-radius:6px;cursor:pointer;color:var(--text-muted);padding:3px 7px;font-size:15px;line-height:1}
+.icon-btn:hover{color:var(--critical);border-color:var(--border)}
+.add-btn{margin-top:10px;background:var(--accent-bg);color:var(--brand-2);border:1px dashed var(--brand-2);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600}
+.add-btn:hover{filter:brightness(.97)}
+.btn{background:var(--surface-1);border:1px solid var(--border-strong);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px}
+.btn:hover{background:var(--surface-2)}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* form grid */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px 16px}
+.field label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:3px;font-weight:600}
+.field .hint{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+textarea.in{width:100%;min-height:54px;background:var(--input-bg);border:1px solid var(--border-strong);border-radius:6px;padding:6px 8px;font-size:13px;resize:vertical}
+
+/* fit checklist */
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px 18px}
+.checks label{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:4px 0;cursor:pointer}
+.checks label input{margin-top:2px;flex:none}
+.checks .lvl{font-size:11px;color:var(--text-muted);display:block}
+
+/* summary */
+.summary-col{position:sticky;top:12px;align-self:start}
+.hero{padding:16px}
+.hero .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary);font-weight:600}
+.hero .big{font-size:34px;font-weight:800;color:var(--brand);font-variant-numeric:tabular-nums;line-height:1.15;margin:2px 0}
+.hero .unit{font-size:13px;color:var(--text-secondary)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.kpi{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 11px}
+.kpi .k{font-size:11.5px;color:var(--text-secondary)}
+.kpi .v{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi.hl{background:var(--accent-bg);border-color:var(--brand-2)}
+.sec-title{font-size:13px;font-weight:700;color:var(--brand);margin:0 0 8px}
+.sum-block{padding:14px 16px;border-top:1px solid var(--border)}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:7px}
+.bar-row{display:grid;grid-template-columns:118px 1fr 74px;align-items:center;gap:8px;font-size:12.5px;cursor:default}
+.bar-row .name{color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-row .track{height:14px;position:relative}
+.bar-row .fill{height:100%;background:var(--series-1);border-radius:0 4px 4px 0;min-width:2px}
+.bar-row .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-secondary)}
+.bar-row:hover .fill{filter:brightness(1.12)}
+.bar-row.zero .name,.bar-row.zero .val{color:var(--text-muted)}
+.vbars{display:flex;align-items:flex-end;gap:14px;height:150px;padding:6px 4px 0;border-bottom:1px solid var(--border-strong);position:relative}
+.vbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:default}
+.vbar .cap{font-size:11.5px;color:var(--text-secondary);margin-bottom:3px;font-variant-numeric:tabular-nums}
+.vbar .col{width:60%;max-width:56px;background:var(--series-1);border-radius:4px 4px 0 0;min-height:2px}
+.vbar:hover .col{filter:brightness(1.12)}
+.vlabels{display:flex;gap:14px;padding:4px 4px 0}
+.vlabels div{flex:1;text-align:center;font-size:12px;color:var(--text-secondary)}
+
+table.sum{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+table.sum th{text-align:left;font-weight:600;color:var(--text-secondary);font-size:11.5px;border-bottom:1px solid var(--border);padding:4px 4px}
+table.sum td{padding:4px 4px;border-bottom:1px solid var(--grid)}
+table.sum td.r,table.sum th.r{text-align:right}
+table.sum tr.tot td{font-weight:700;border-top:1px solid var(--border-strong)}
+
+.edition{display:flex;gap:4px;margin:6px 0 10px}
+.edition div{flex:1;text-align:center;font-size:11px;padding:6px 2px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted);line-height:1.2}
+.edition div.on{background:var(--accent-bg);border-color:var(--brand-2);color:var(--brand-2);font-weight:700}
+.edition div.rec{background:var(--brand-2);border-color:var(--brand-2);color:#fff;font-weight:700}
+ul.reasons{margin:4px 0 0;padding-left:18px;font-size:12.5px;color:var(--text-secondary)}
+ul.reasons li{margin:2px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;border:1px solid var(--border-strong);border-radius:999px;padding:3px 10px;background:var(--surface-2)}
+.chip.on{border-color:var(--brand-2);color:var(--brand-2);background:var(--accent-bg);font-weight:600}
+.note{font-size:11.5px;color:var(--text-muted);margin-top:8px}
+.warnbox{display:flex;gap:8px;background:var(--accent-bg);border:1px solid var(--brand-2);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text-secondary);margin:0 0 12px}
+.warnbox b{color:var(--text-primary)}
+
+.tooltip{position:fixed;pointer-events:none;background:#0f1e36;color:#fff;padding:7px 10px;border-radius:6px;font-size:12px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:50;display:none;max-width:280px}
+.tooltip b{font-weight:700}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f1e36;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;z-index:60;pointer-events:none}
+.toast.show{opacity:1}
+
+/* print */
+.print-only{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;font-size:11px}
+  .topbar .tb-btn,.add-btn,.icon-btn,.no-print{display:none!important}
+  .topbar{background:#fff;color:#12284b;border-bottom:3px solid #0073dc;padding:0 0 8px}
+  .layout{display:block;padding:0}
+  .summary-col{position:static}
+  .card{box-shadow:none;break-inside:avoid;border-color:#ccd}
+  .card.collapsed .card-b{display:block}
+  .card.empty{display:none}
+  .print-only{display:block}
+  input.in,select.in{border:none;padding:0;background:none;appearance:none;-webkit-appearance:none}
+  .layout{display:flex!important;flex-direction:column-reverse}
+  .summary-col .card{break-inside:auto}
+  .sum-block{break-inside:avoid}
+  .inputs-col{break-before:page}
+  .tbl-wrap{overflow:visible}
+  table.rows{font-size:8.5px;table-layout:auto}
+  table.rows th{font-size:7.5px;padding:3px 2px}
+  table.rows td{padding:2px}
+  table.rows input.in,table.rows select.in,table.rows input.in.txt,table.rows input.in[type=number]{min-width:0!important;max-width:none!important;font-size:8.5px;width:auto}
+  table.rows input.in.txt{width:140px}
+  table.rows input.in[type=number]{width:46px}
+  .chev{display:none}
+  .card-rates-print{display:block}
+  #card-rates.collapsed{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <h1>Boomi Platform Message Estimator</h1>
+    <div class="sub">Presales sizing tool · enter workload inputs → derive platform messages → right-size the platform</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="tb-btn" id="btnSample" title="Load a worked example">Load sample</button>
+  <button class="tb-btn" id="btnNew" title="Clear all inputs">New</button>
+  <button class="tb-btn" id="btnImport" title="Open a saved scenario (.json)">Open…</button>
+  <button class="tb-btn" id="btnExport" title="Save scenario as .json">Save .json</button>
+  <button class="tb-btn" id="btnCsv" title="Export breakdown as CSV">Export CSV</button>
+  <button class="tb-btn primary" id="btnPrint" title="Print or save as PDF">Print / PDF</button>
+  <button class="tb-btn" id="btnTheme" title="Toggle light/dark">◐</button>
+  <input type="file" id="fileIn" accept="application/json,.json" hidden>
+</header>
+
+<main class="layout">
+  <section class="inputs-col">
+
+    <!-- Opportunity -->
+    <div class="card" id="card-meta">
+      <div class="card-h" data-toggle><span class="chev">▾</span><h2>Opportunity</h2><span class="badge">Context</span></div>
+      <div class="card-b">
+        <div class="fgrid">
+          <div class="field"><label>Customer</label><input class="in" data-meta="customer" placeholder="e.g. Acme Retail"></div>
+          <div class="field"><label>Opportunity / use case</label><input class="in" data-meta="opportunity" placeholder="e.g. Order-to-cash modernisation"></div>
+          <div class="field"><label>Prepared by</label><input class="in" data-meta="preparedBy" placeholder="Presales name"></div>
+          <div class="field"><label>Account Executive</label><input class="in" data-meta="ae" placeholder="AE name"></div>
+          <div class="field"><label>Date</label><input class="in" type="date" data-meta="date"></div>
+          <div class="field"><label>Region / deployment</label><input class="in" data-meta="region" placeholder="e.g. APAC · Boomi cloud + 1 on-prem runtime"></div>
+        </div>
+        <div class="field" style="margin-top:10px"><label>Notes & assumptions</label><textarea class="in" data-meta="notes" placeholder="Source systems, volumes confirmed with customer, open questions…"></textarea></div>
+      </div>
+    </div>
+
+    <!-- Global assumptions -->
+    <div class="card" id="card-settings">
+      <div class="card-h" data-toggle><span class="chev">▾</span><h2>Sizing assumptions</h2><span class="badge">Applies to all services</span></div>
+      <div class="card-b">
+        <div class="fgrid">
+          <div class="field"><label>Active days per month</label><input class="in" type="number" min="1" max="31" step="0.1" data-set="daysPerMonth"><div class="hint">30.4 = every day · 21.7 = business days</div></div>
+          <div class="field"><label>Non-prod usage (% of prod)</label><input class="in" type="number" min="0" step="1" data-set="nonProdPct"><div class="hint">Test & dev executions count like production</div></div>
+          <div class="field"><label>Annual growth %</label><input class="in" type="number" min="0" step="1" data-set="growthPct"><div class="hint">Volume growth year over year</div></div>
+          <div class="field"><label>Safety headroom %</label><input class="in" type="number" min="0" step="1" data-set="headroomPct"><div class="hint">Peaks, retries, new interfaces</div></div>
+          <div class="field"><label>Contract term (years)</label><input class="in" type="number" min="1" max="5" step="1" data-set="years"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sections"></div>
+
+    <!-- Platform fit -->
+    <div class="card" id="card-fit">
+      <div class="card-h" data-toggle><span class="chev">▾</span><h2>Platform fit: capability requirements</h2><span class="badge">Drives edition recommendation</span></div>
+      <div class="card-b">
+        <p class="help">Tick what the customer needs. The minimum Integration edition comes from the highest capability ticked. The capability-to-edition mapping follows Boomi's public edition comparison and is editable in <code>FIT_RULES</code>.</p>
+        <div class="checks" id="fitChecks"></div>
+      </div>
+    </div>
+
+    <!-- Conversion rates -->
+    <div class="card collapsed" id="card-rates">
+      <div class="card-h" data-toggle><span class="chev">▾</span><h2>Message conversion rates</h2><span class="badge">Admin · editable</span></div>
+      <div class="card-b">
+        <div class="warnbox"><span>ⓘ</span><span><b>Check these against the current Boomi price book or order form before quoting.</b> Defaults follow Boomi's published Platform Message definition (1 document = 1 message, including request/response replies) and the service equivalents on the Pay-As-You-Go page. Contract terms can differ.</span></div>
+        <div class="tbl-wrap"><table class="rows" id="ratesTbl"></table></div>
+        <div class="row-actions" style="margin-top:10px">
+          <button class="btn" id="btnResetRates">Reset rates to defaults</button>
+        </div>
+        <h3 class="sec-title" style="margin-top:18px">Volume bands (for the AE's tier conversation)</h3>
+        <p class="help">The default bands are <b>examples only</b>. Replace them with your price-book tiers. Each band's upper limit is annual messages, including non-prod and headroom.</p>
+        <div class="tbl-wrap"><table class="rows" id="bandsTbl"></table></div>
+        <div class="row-actions" style="margin-top:10px"><button class="btn" id="btnResetBands">Reset bands</button></div>
+        <h3 class="sec-title" style="margin-top:18px">Pay-As-You-Go reference</h3>
+        <div class="fgrid">
+          <div class="field"><label>Base fee (USD / month)</label><input class="in" type="number" min="0" step="1" data-set="paygBase"></div>
+          <div class="field"><label>Price per message (USD)</label><input class="in" type="number" min="0" step="0.001" data-set="paygRate"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Summary -->
+  <aside class="summary-col">
+    <div class="card">
+      <div class="hero">
+        <div class="print-only" id="printMeta" style="margin-bottom:8px"></div>
+        <div class="lbl">Estimated platform messages · per month</div>
+        <div class="big" id="sumMonthly">0</div>
+        <div class="unit" id="sumMonthlySub">production + non-prod, before headroom</div>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Production / month</div><div class="v" id="kProd">0</div></div>
+          <div class="kpi"><div class="k">Non-prod / month</div><div class="v" id="kNonProd">0</div></div>
+          <div class="kpi"><div class="k">Year 1 annual</div><div class="v" id="kAnnual">0</div></div>
+          <div class="kpi hl"><div class="k">Year 1 + headroom</div><div class="v" id="kAnnualH">0</div></div>
+        </div>
+      </div>
+
+      <div class="sum-block">
+        <h3 class="sec-title">Messages by service · per month (prod)</h3>
+        <div class="bars" id="svcBars"></div>
+      </div>
+
+      <div class="sum-block">
+        <h3 class="sec-title" id="projTitle">Annual messages over the term (incl. non-prod + headroom)</h3>
+        <div class="vbars" id="projBars"></div>
+        <div class="vlabels" id="projLabels"></div>
+      </div>
+
+      <div class="sum-block">
+        <h3 class="sec-title">Breakdown</h3>
+        <table class="sum" id="sumTbl"></table>
+      </div>
+
+      <div class="sum-block">
+        <h3 class="sec-title">Platform recommendation</h3>
+        <div style="font-size:12px;color:var(--text-secondary)">Minimum Integration edition</div>
+        <div class="edition" id="edBar"></div>
+        <ul class="reasons" id="edReasons"></ul>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:12px">Platform services in scope</div>
+        <div class="chips" id="svcChips" style="margin-top:6px"></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:12px">Volume band (Year 1 + headroom)</div>
+        <div id="bandOut" style="font-weight:700;margin-top:2px"></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:12px">Pay-As-You-Go list reference</div>
+        <div id="paygOut" style="font-variant-numeric:tabular-nums"></div>
+        <div class="note">This is a sizing aid for the AE conversation, not a quote. Subscription pricing is quote-based and depends on edition, connectors and add-ons.</div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="tooltip" id="tip"></div>
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
