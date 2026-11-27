@@ -11,6 +11,7 @@ const DEFAULT_RATES = {
   event:      {label:'Event Streams event (published or consumed)',           unit:'events',   mode:'every', value:100, src:'Boomi published equivalent: 100 events = 1 message'},
   hub:        {label:'Data Hub golden record (per year)',                     unit:'golden record / yr', mode:'per', value:12, src:'Boomi published equivalent: 1 golden record = 12 messages'},
   bdu:        {label:'Data Integration (Rivery) BDU',                         unit:'BDU',      mode:'per', value:50, src:'Boomi published equivalent: 1 BDU = 50 messages'},
+  cp:         {label:'API Control Plane: managed API (per year)',            unit:'API / yr', mode:'per', value:30000, src:'Boomi One Platform calculator: 1 Control Plane API = 30,000 messages (edition allowance netted off by the AE)'},
   ai:         {label:'AI agent prompt',                                       unit:'prompt',   mode:'per', value:100, src:'Boomi published equivalent: 1 AI prompt = 100 messages'},
 };
 
@@ -24,32 +25,9 @@ const DEFAULT_BANDS = [
 
 const DEFAULT_SETTINGS = {daysPerMonth:30.4, nonProdPct:15, growthPct:20, headroomPct:20, years:3};
 
-/* Edition names as in Boomi Help › Integration editions. Personal Edition (30-day trial) is left out
-   because it can't deploy or schedule processes. boomi.com/pricing labels the first column
-   "Standard features"; that is the feature baseline, not an edition name. */
-const EDITIONS = ['Base','Professional','Professional Plus','Enterprise','Enterprise Plus'];
 
-/* capability → minimum edition (index into EDITIONS) or platform service */
-const FIT_RULES = [
-  {k:'prodOnly',     label:'Production deployment only is acceptable', lvl:0, note:'Base'},
-  {k:'nonProdEnv',   label:'Needs test / dev environments', lvl:1, note:'Professional+'},
-  {k:'cloudRuntime', label:'Boomi-hosted public cloud runtime', lvl:1, note:'Professional+'},
-  {k:'orchestration',label:'Advanced integrations / process orchestration', lvl:1, note:'Professional+'},
-  {k:'entConnectors',label:'Enterprise connectors (SAP, Oracle E-Business Suite)', lvl:1, note:'Professional+ · extra cost'},
-  {k:'apiEnable',    label:'Expose integrations as APIs / web services', lvl:2, note:'Professional Plus+'},
-  {k:'moreConns',    label:'High number of connections', lvl:2, note:'Professional Plus+'},
-  {k:'ha',           label:'High availability / clustered runtime', lvl:3, note:'Enterprise+'},
-  {k:'parallel',     label:'Parallel processing / large data loads', lvl:3, note:'Enterprise+'},
-  {k:'customRoles',  label:'Custom-role user management', lvl:3, note:'Enterprise+'},
-  {k:'queuing',      label:'Message queuing (advanced architectures)', lvl:4, note:'Enterprise Plus'},
-  {k:'apim',         label:'API gateway, developer portal, API governance', svc:'API Management', note:'Adds API Management'},
-  {k:'b2b',          label:'Trading partners / EDI (X12, EDIFACT, AS2)', svc:'B2B / EDI', note:'Adds B2B/EDI'},
-  {k:'mdm',          label:'Master data / golden records', svc:'Data Hub', note:'Adds Data Hub'},
-  {k:'elt',          label:'ELT / CDC into a data warehouse or lake', svc:'Data Integration', note:'Adds Data Integration'},
-  {k:'events',       label:'Event-driven pub/sub messaging', svc:'Event Streams', note:'Adds Event Streams'},
-  {k:'apps',         label:'Human workflow / low-code apps', svc:'Flow', note:'Adds Flow'},
-  {k:'agents',       label:'AI agents (Agentstudio)', svc:'Agentstudio (AI)', note:'Adds Agentstudio'},
-];
+/* Data Integration (Rivery) BDU rates, from Boomi Help › Data Integration › Pricing FAQs */
+const BDU = {api:0.5, db:1, cdc:2, hf:1};
 
 const PERIOD_OPTS = {hour:'per hour', day:'per day', week:'per week', month:'per month', year:'per year'};
 
@@ -70,6 +48,7 @@ const SECTIONS = [
       {k:'resp', label:'Req/resp', type:'check', def:true, tip:'Target returns a response document (REST, SOAP, DB upsert…) that also counts'},
       {k:'lookups', label:'Lookups', type:'num', def:0, tip:'Enrichment or lookup calls per document. Each = 1 request + 1 response'},
       {k:'retry', label:'Retry %', type:'num', def:2, tip:'Share of documents re-sent because of errors or retries'},
+      {k:'initial', label:'Initial load', type:'num', def:0, tip:'One-time initial sync / data migration: records loaded once at go-live. Counted in Year 1 only, not in the monthly figure.'},
     ],
     cols:['Docs / mo','Messages / mo'],
     calc(r){
@@ -88,11 +67,14 @@ const SECTIONS = [
         `<b>Messages / month</b>`,
         `${fx(docs)} docs × ${fx(per)}${n(r.retry)?` × ${fx(1+n(r.retry)/100,2)} (retry ${fx(r.retry)}%)`:''}${rateNote('doc')} = <b>${fmt(msgs)}</b>`,
       ];
-      return {units, msgs, cols:[docs, msgs], ex};
+      const initDocs = Math.ceil(n(r.initial)/Math.max(1,n(r.batch)));
+      const oneTime = initDocs*per*rateMul('doc');
+      if(oneTime) ex.push(`<b>One-time initial load (Year 1 only)</b>`, `ceil(${fx(r.initial)} ÷ ${fx(Math.max(1,n(r.batch)))}) = ${fx(initDocs)} docs × ${fx(per)} = <b>${fmt(oneTime)}</b> messages`);
+      return {units, msgs, oneTime, cols:[docs, msgs], ex};
     },
     sample:[
       {name:'Sales orders: Shopify → SAP S/4', trigger:'rt', records:1, runs:120, per:'hour', batch:1, reads:1, writes:1, resp:true, lookups:2, retry:2},
-      {name:'Product master: SAP → Shopify', trigger:'sched', records:25000, runs:1, per:'day', batch:100, reads:1, writes:1, resp:true, lookups:0, retry:1},
+      {name:'Product master: SAP → Shopify', trigger:'sched', records:25000, runs:1, per:'day', batch:100, reads:1, writes:1, resp:true, lookups:0, retry:1, initial:250000},
       {name:'Inventory levels: WMS → eCom + POS', trigger:'sched', records:8000, runs:24, per:'day', batch:200, reads:1, writes:2, resp:true, lookups:0, retry:1},
       {name:'Invoices: SAP → Salesforce', trigger:'sched', records:3000, runs:1, per:'day', batch:1, reads:1, writes:1, resp:true, lookups:1, retry:2},
       {name:'HR employees: Workday → AD', trigger:'sched', records:400, runs:1, per:'day', batch:1, reads:1, writes:1, resp:false, lookups:0, retry:0},
@@ -149,6 +131,25 @@ const SECTIONS = [
       {name:'Order status API (mobile app)', consumers:1, calls:6000, per:'day'},
       {name:'Partner catalogue API', consumers:8, calls:500, per:'day'},
     ]
+  },
+  {
+    key:'cp', title:'API Control Plane', service:'API Control Plane', rate:'cp', fit:'apim',
+    help:'APIs governed through the Boomi API Control Plane (federated management of APIs on other gateways, such as AWS, Azure or Kong). Boomi\'s One Platform calculator converts each managed API to <b>30,000 messages a year</b>. Editions include an allowance of Control Plane APIs. The AE nets that off; this tool shows the gross figure.',
+    fields:[
+      {k:'name', label:'Gateway / API group', type:'text', def:'Federated APIs'},
+      {k:'apis', label:'Managed APIs', type:'num', def:5, tip:'Number of APIs managed in the Control Plane'},
+    ],
+    cols:['APIs','Messages / mo'],
+    calc(r){
+      const yr = n(r.apis)*rateMul('cp'), m = yr/12;
+      const ex = [
+        `${fx(r.apis)} managed APIs × ${fx(rateMul('cp'))} messages per API per year = ${fmt(yr)} / year`,
+        `÷ 12 months = <b>${fmt(m)}</b> messages / month`,
+        `<span style="opacity:.75">Gross figure. The edition's included Control Plane APIs are netted off by the AE.</span>`,
+      ];
+      return {units:n(r.apis), msgs:m, cols:[n(r.apis), m], ex};
+    },
+    sample:[{name:'AWS + Azure API gateways', apis:5}]
   },
   {
     key:'events', title:'Event Streams', service:'Event Streams', rate:'event', fit:'events',
@@ -216,45 +217,63 @@ const SECTIONS = [
   },
   {
     key:'bdi', title:'Data Integration (ELT / CDC)', service:'Data Integration', rate:'bdu', fit:'elt',
-    help:'Boomi Data Integration (formerly Rivery) usage is measured in BDUs. Enter the expected BDUs per month from the BDI sizing.',
+    help:'Boomi Data Integration (formerly Rivery) usage is measured in BDUs (Boomi Data Units), then converted at 50 messages per BDU. Pick a pipeline type and the tool estimates BDUs from Boomi\'s Data Integration pricing rules: <b>API</b> 0.5 BDU per output table per run · <b>DB / file</b> 1 BDU per 100 MB · <b>log-based CDC</b> 2 BDU per 100 MB · <b>high-frequency API</b> 1 BDU per 100 MB. Then add the logic uplift (Boomi\'s calculator uses 20% for Python and workflow steps). Use <i>Known BDUs</i> if you already have a BDI sizing.',
     fields:[
-      {k:'name', label:'Pipeline / river', type:'text', def:'ERP → Snowflake'},
-      {k:'bdus', label:'BDUs', type:'num', def:20},
-      {k:'per', label:'Per', type:'period', def:'month'},
+      {k:'name', label:'Pipeline / river', type:'text', def:'New pipeline'},
+      {k:'type', label:'Pipeline type', type:'select', opts:{api:'API source', hf:'High-frequency API', db:'DB / file replication', cdc:'DB replication (log-based CDC)', manual:'Known BDUs'}, def:'api'},
+      {k:'tables', label:'Output tables', type:'num', def:5, tip:'API source only: tables written per run'},
+      {k:'runs', label:'Runs / day', type:'num', def:4, tip:'API source only: executions per day'},
+      {k:'gb', label:'GB / month', type:'num', def:10, tip:'High-frequency API, DB / file and CDC only: data transferred per month'},
+      {k:'bdus', label:'Known BDUs / mo', type:'num', def:0, tip:'Known BDUs only: BDUs per month from a BDI sizing'},
+      {k:'logic', label:'Logic uplift %', type:'num', def:20, tip:'Python logic and workflow orchestration. Boomi\'s calculator adds 20%.'},
     ],
     cols:['BDUs / mo','Messages / mo'],
     calc(r){
-      const b = perMonth(n(r.bdus), r.per);
+      const d = n(S.settings.daysPerMonth)||30.4, mb100 = n(r.gb)*10.24;
+      let base=0, how='';
+      switch(r.type){
+        case 'api': base = n(r.tables)*n(r.runs)*d*BDU.api; how = `${fx(r.tables)} tables × ${fx(r.runs)} runs/day × ${fx(d,1)} days × ${BDU.api} BDU`; break;
+        case 'hf':  base = mb100*BDU.hf;  how = `${fx(r.gb)} GB = ${fx(mb100,1)} × 100 MB × ${BDU.hf} BDU`; break;
+        case 'db':  base = mb100*BDU.db;  how = `${fx(r.gb)} GB = ${fx(mb100,1)} × 100 MB × ${BDU.db} BDU`; break;
+        case 'cdc': base = mb100*BDU.cdc; how = `${fx(r.gb)} GB = ${fx(mb100,1)} × 100 MB × ${BDU.cdc} BDU (log-based CDC)`; break;
+        default:    base = n(r.bdus); how = `${fx(r.bdus)} known BDUs / month`;
+      }
+      const b = base*(1+n(r.logic)/100);
       const msgs = b*rateMul('bdu');
       const ex = [
-        `${pmText(n(r.bdus), r.per, 'BDUs')}`,
-        `${fx(b)} BDUs${rateNote('bdu')} = <b>${fmt(msgs)}</b> messages`,
+        `${how} = ${fx(base,1)} BDUs`,
+        n(r.logic) ? `× ${fx(1+n(r.logic)/100,2)} logic uplift (${fx(r.logic)}%) = <b>${fx(b,1)}</b> BDUs / month` : `= <b>${fx(b,1)}</b> BDUs / month`,
+        `${fx(b,1)} BDUs${rateNote('bdu')} = <b>${fmt(msgs)}</b> messages`,
       ];
       return {units:b, msgs, cols:[b, msgs], ex};
     },
-    sample:[{name:'SAP + Shopify → Snowflake (CDC)', bdus:30, per:'month'}]
+    sample:[
+      {name:'Shopify + Salesforce APIs → Snowflake', type:'api', tables:8, runs:4, logic:20},
+      {name:'SAP ERP DB → Snowflake (CDC)', type:'cdc', gb:20, logic:20},
+    ]
   },
   {
     key:'ai', title:'AI agents (Agentstudio)', service:'Agentstudio (AI)', rate:'ai', fit:'agents',
-    help:'Each prompt sent to an agent counts. Prompts per month = <code>conversations × prompts per conversation</code>. Tools the agent calls through Integration processes are modelled under Integration.',
+    help:'Each prompt (question or turn) sent to an agent counts. Prompts per year = <code>users × sessions per user per day × prompts per session × working days</code>, which is how Boomi\'s One Platform calculator sizes it. Tools the agent calls through Integration processes are modelled under Integration.',
     fields:[
       {k:'name', label:'Agent', type:'text', def:'New agent'},
-      {k:'convs', label:'Conversations', type:'num', def:50},
-      {k:'per', label:'Per', type:'period', def:'day'},
-      {k:'prompts', label:'Prompts / conv.', type:'num', def:4},
+      {k:'users', label:'Users', type:'num', def:50, tip:'People (or systems) using the agent'},
+      {k:'sessions', label:'Sessions / user / day', type:'num', def:1},
+      {k:'prompts', label:'Prompts / session', type:'num', def:4, tip:'Questions or turns per session. 3–5 is typical.'},
+      {k:'days', label:'Working days / yr', type:'num', def:250, tip:'250 = weekdays · 365 = every day'},
     ],
     cols:['Prompts / mo','Messages / mo'],
     calc(r){
-      const p = perMonth(n(r.convs), r.per)*n(r.prompts);
+      const yr = n(r.users)*n(r.sessions)*n(r.prompts)*n(r.days), p = yr/12;
       const msgs = p*rateMul('ai');
       const ex = [
-        `${pmText(n(r.convs), r.per, 'conversations')}`,
-        `× ${fx(r.prompts)} prompts per conversation = <b>${fmt(p)}</b> prompts`,
+        `${fx(r.users)} users × ${fx(r.sessions)} sessions/day × ${fx(r.prompts)} prompts × ${fx(r.days)} days = ${fmt(yr)} prompts / year`,
+        `÷ 12 = <b>${fmt(p)}</b> prompts / month`,
         `${fx(p)} prompts${rateNote('ai')} = <b>${fmt(msgs)}</b> messages`,
       ];
       return {units:p, msgs, cols:[p, msgs], ex};
     },
-    sample:[{name:'Order-status assistant', convs:40, per:'day', prompts:3}]
+    sample:[{name:'Order-status assistant', users:40, sessions:1, prompts:3, days:365}]
   },
 ];
 
@@ -308,15 +327,6 @@ const CONN_CATALOG = {
   other:{label:'Other connector', cls:'std'},
 };
 
-/* Included connection licenses per edition [prod, test], from Boomi's Integration editions page.
-   Small Business and Trading Partner licenses are not listed as included. */
-const DEFAULT_ED_INC = [
-  {sp:2,  st:0,  ep:0, et:0, test:false, ent:false},
-  {sp:5,  st:5,  ep:0, et:0, test:true,  ent:true},
-  {sp:7,  st:7,  ep:0, et:0, test:true,  ent:true},
-  {sp:10, st:20, ep:1, et:2, test:true,  ent:true},
-  {sp:15, st:30, ep:2, et:4, test:true,  ent:true},
-];
 
 const CONN_FIELDS = [
   {k:'name', label:'System / endpoint', type:'text', def:'New connection'},
@@ -371,35 +381,6 @@ function computeConns(){
   return {rows, proj, y1:proj[0], end, exemptCount, years};
 }
 
-function connRecommend(C, fitLvl){
-  const e = C.end, inc = S.edInc, reasons = [];
-  const needTest = e.test>0, needEnt = e.ent.prod+e.ent.test>0;
-  let lvl = 0;
-  for(; lvl<EDITIONS.length; lvl++){
-    const i = inc[lvl], d = DEFAULT_ED_INC[lvl];
-    if(needTest && !d.test) continue;
-    if(needEnt && !d.ent) continue;
-    if(n(i.sp)>=e.std.prod && n(i.st)>=e.std.test) break;
-  }
-  const covered = lvl<EDITIONS.length;
-  if(!covered) lvl = EDITIONS.length-1;
-  if(needTest && !DEFAULT_ED_INC[0].test) reasons.push({lvl:1, text:`${fmt(e.test)} test licences needed → test environments start at ${EDITIONS[1]}`});
-  if(needEnt) reasons.push({lvl:1, text:`Enterprise-class connectors (${fmt(e.ent.prod)} prod / ${fmt(e.ent.test)} test) → ${EDITIONS[1]}+`});
-  reasons.push({lvl, text: covered
-    ? `${fmt(e.std.prod)} prod / ${fmt(e.std.test)} test Standard-class connectors fit ${EDITIONS[lvl]} Edition (${fmt(n(inc[lvl].sp))} / ${fmt(n(inc[lvl].st))} included)`
-    : `${fmt(e.std.prod)} prod / ${fmt(e.std.test)} test Standard-class connectors exceed every edition's inclusion → ${EDITIONS[lvl]} plus additional licences`});
-  if(fitLvl>lvl) reasons.push({lvl:fitLvl, text:`Capability requirements (Platform fit) → ${EDITIONS[fitLvl]}`});
-  const final = Math.max(lvl, fitLvl);
-  reasons.sort((a,b)=>b.lvl-a.lvl);
-  const i = inc[final];
-  const cov = [
-    ['Standard', 'prod', e.std.prod, n(i.sp)], ['Standard', 'test', e.std.test, n(i.st)],
-    ['Enterprise', 'prod', e.ent.prod, n(i.ep)], ['Enterprise', 'test', e.ent.test, n(i.et)],
-    ['Small Business', 'prod', e.sb.prod, 0], ['Small Business', 'test', e.sb.test, 0],
-    ['Trading Partner', 'prod', e.tp.prod, 0], ['Trading Partner', 'test', e.tp.test, 0],
-  ].map(([c,env,req,incl])=>({c, env, req, incl, add:Math.max(0,req-incl)}));
-  return {lvl:final, reasons, cov};
-}
 
 /* ============================================================
    STATE
@@ -412,11 +393,9 @@ function blankState(){
     settings:{...DEFAULT_SETTINGS},
     rates:Object.fromEntries(Object.entries(DEFAULT_RATES).map(([k,v])=>[k,v.value])),
     bands:DEFAULT_BANDS.map(b=>({...b})),
-    fit:{},
-    collapsed:{'card-rates':true,'card-edinc':true},
+    collapsed:{'card-rates':true},
     mode:'messages',
     conns:[],
-    edInc:DEFAULT_ED_INC.map(({sp,st,ep,et})=>({sp,st,ep,et})),
   };
   SECTIONS.forEach(sec=>{ s[sec.key]=[]; });
   return s;
@@ -427,7 +406,6 @@ function sampleState(){
   s.meta = {customer:'Acme Retail (sample)', opportunity:'Order-to-cash & omnichannel modernisation', preparedBy:'Presales', ae:'', date:new Date().toISOString().slice(0,10), region:'APAC · Boomi cloud runtime', notes:'Sample scenario. Volumes are illustrative.'};
   SECTIONS.forEach(sec=>{ s[sec.key]=sec.sample.map(r=>({...defaultsFor(sec), ...r, id:uid()})); });
   s.conns = CONN_SAMPLE.map(r=>({...defaultsForConn(), ...r, id:uid()}));
-  s.fit = {nonProdEnv:true, cloudRuntime:true, orchestration:true, entConnectors:true, apiEnable:true, apim:true, b2b:true, mdm:true, elt:true, events:true, apps:true, agents:true};
   return s;
 }
 
@@ -486,41 +464,31 @@ function compute(){
     const rows = S[sec.key].map(r=>({id:r.id, ...sec.calc(r)}));
     const msgs = rows.reduce((a,r)=>a+r.msgs,0);
     const units = rows.reduce((a,r)=>a+r.units,0);
-    return {sec, rows, msgs, units};
+    const oneTime = rows.reduce((a,r)=>a+(r.oneTime||0),0);
+    return {sec, rows, msgs, units, oneTime};
   });
+  const oneTime = svc.reduce((a,s)=>a+s.oneTime,0);
   const prod = svc.reduce((a,s)=>a+s.msgs,0);
   const nonProd = prod*n(S.settings.nonProdPct)/100;
   const monthly = prod+nonProd;
   const years = Math.min(5,Math.max(1,Math.round(n(S.settings.years)||1)));
   const g = n(S.settings.growthPct)/100, h = n(S.settings.headroomPct)/100;
-  const proj = Array.from({length:years},(_,i)=>{ const base = monthly*12*Math.pow(1+g,i); return {year:i+1, base, withH:base*(1+h)}; });
-  return {svc, prod, nonProd, monthly, proj};
+  const proj = Array.from({length:years},(_,i)=>{ const base = monthly*12*Math.pow(1+g,i) + (i===0?oneTime:0); return {year:i+1, base, withH:base*(1+h), oneTime:i===0?oneTime:0}; });
+  return {svc, prod, nonProd, monthly, proj, oneTime};
 }
 
-function recommend(R){
-  let lvl = 0; const reasons = [];
-  FIT_RULES.forEach(rule=>{
-    if(effFit(rule.k) && rule.lvl!==undefined && rule.lvl>0){
-      if(rule.lvl>lvl) lvl = rule.lvl;
-      reasons.push({lvl:rule.lvl, text:`${rule.label}${DERIVED[rule.k]&&!S.fit[rule.k]?' (from connection inventory)':''} → ${EDITIONS[rule.lvl]}+`});
-    }
-  });
-  reasons.sort((a,b)=>b.lvl-a.lvl);
-  if(!reasons.length) reasons.push({lvl:0, text:'No advanced capabilities ticked yet. Base is the starting point.'});
-  // services in scope: from fit ticks or non-zero usage
-  const services = new Map([['Integration', R.svc[0].msgs>0 || true]]);
-  SECTIONS.slice(1).forEach(sec=>{
-    const used = R.svc.find(s=>s.sec.key===sec.key).msgs>0;
-    const ticked = sec.fit && effFit(sec.fit);
-    services.set(sec.service, !!(used||ticked));
-  });
-  // band
+function servicesInScope(R){
+  const services = new Map([['Integration', true]]);
+  SECTIONS.slice(1).forEach(sec=>{ services.set(sec.service, R.svc.find(x=>x.sec.key===sec.key).msgs>0); });
+  return services;
+}
+function volumeBand(R){
   const y1 = R.proj[0]?.withH||0;
   const bands = S.bands.filter(b=>b.name);
   let band = null;
   for(const b of bands){ if(b.upTo===null || b.upTo==='' || y1<=n(b.upTo)){ band=b; break; } }
   if(!band && bands.length) band = bands[bands.length-1];
-  return {lvl, reasons, services, band, y1};
+  return {band, y1};
 }
 
 /* ============================================================
@@ -563,7 +531,7 @@ function rowHtml(sec, r){
 
 function rateText(key){
   const d = DEFAULT_RATES[key]; const v = S.rates[key];
-  return d.mode==='every' ? `${fmt(n(v))} ${d.unit} = 1 message` : `1 ${d.unit} = ${n(v)} message${n(v)===1?'':'s'}`;
+  return d.mode==='every' ? `${fmt(n(v))} ${d.unit} = 1 message` : `1 ${d.unit} = ${fx(n(v))} message${n(v)===1?'':'s'}`;
 }
 
 function renderRates(){
@@ -586,82 +554,22 @@ function renderBands(){
     `</tbody><tfoot><tr><td colspan="3"><button class="add-btn" id="btnAddBand" style="margin-top:6px">+ Add band</button></td></tr></tfoot>`;
 }
 
-function renderFit(){
-  document.getElementById('fitChecks').innerHTML = FIT_RULES.map(r=>
-    `<label data-fitlbl="${r.k}"><input type="checkbox" data-fit="${r.k}"${S.fit[r.k]?' checked':''}><span>${esc(r.label)}<span class="lvl">${esc(r.note)}</span><span class="auto" data-fitauto="${r.k}"></span></span></label>`).join('');
-}
 
-/* ---------- Platform fit: auto-ticks from the connection inventory + consistency warnings ---------- */
-/* connection inventory → capability it implies (connections mode only) */
-const CONN_FIT = [
-  {k:'entConnectors', test:r=>r.cls==='ent', why:'Enterprise-class connector'},
-  {k:'b2b',           test:r=>r.cls==='tp' || r.connector==='tp', why:'trading partner'},
-  {k:'nonProdEnv',    test:r=>r.cls!=='exempt' && n(r.testRt)>0, why:'deployed to a test runtime'},
-  {k:'apiEnable',     test:r=>r.connector==='wss', why:'Web Services Server listener'},
-  {k:'events',        test:r=>r.connector==='events', why:'Event Streams connector'},
-  {k:'mdm',           test:r=>r.connector==='datahub', why:'Data Hub connector'},
-  {k:'apps',          test:r=>r.connector==='fss', why:'Flow Services Server connector'},
-];
-function derivedFit(){
-  const d = {};
-  if(S.mode!=='connections') return d;
-  CONN_FIT.forEach(rule=>{
-    const hits = S.conns.filter(r=>n(r.qty)>0 && rule.test(r)).map(r=>r.name||CONN_CATALOG[r.connector]?.label);
-    if(hits.length) d[rule.k] = {why:rule.why, names:hits};
-  });
-  return d;
-}
-let DERIVED = {};
-function effFit(k){ return !!(S.fit[k] || DERIVED[k]); }
 
-const ENT_RX = /\bSAP\b|S\/4|\bECC\b|Oracle\s*(E-?Business|EBS)|\bEBS\b/i;
-function fitWarnings(){
-  const w = [];
-  if(S.mode==='connections'){
-    S.conns.forEach(r=>{
-      const cat = CONN_CATALOG[r.connector];
-      if(cat && cat.v && cat.cls!==r.cls && r.cls!=='exempt')
-        w.push({text:`"${r.name}" uses the ${cat.label} connector but is set to the ${CONN_CLASSES[r.cls]?.label} class. Boomi documents it as ${CONN_CLASSES[cat.cls].label}.`, fix:{row:r.id, cls:cat.cls}, fixLabel:`Set to ${CONN_CLASSES[cat.cls].label}`});
-      else if(r.cls==='std' && ENT_RX.test(r.name||'') && !['sap4','sap','oracleebs'].includes(r.connector))
-        w.push({text:`"${r.name}" looks like an SAP / Oracle EBS system but uses a Standard connector (${cat?.label||r.connector}). That's fine for REST/OData APIs. If it will use the SAP or Oracle EBS connector, switch it to keep it Enterprise class.`});
-    });
-  } else if(!S.fit.entConnectors){
-    const hits = [...S.integrations, ...S.edi].filter(r=>ENT_RX.test(r.name||'')).map(r=>r.name);
-    if(hits.length) w.push({text:`${hits.length} interface${hits.length>1?'s':''} mention SAP or Oracle EBS (${hits.slice(0,2).map(h=>`"${h}"`).join(', ')}${hits.length>2?'…':''}). SAP and Oracle E-Business connectors are Enterprise class, available from Professional at extra cost. Tick "Enterprise connectors" unless it uses Boomi for SAP or a plain REST/OData API.`, fit:'entConnectors', fixLabel:'Tick Enterprise connectors'});
-  }
-  return w;
-}
-function refreshFit(){
-  DERIVED = derivedFit();
-  FIT_RULES.forEach(r=>{
-    const cb = document.querySelector(`input[data-fit="${r.k}"]`); if(!cb) return;
-    const d = DERIVED[r.k];
-    cb.checked = !!(S.fit[r.k] || d); cb.disabled = !!d;
-    const a = document.querySelector(`[data-fitauto="${r.k}"]`);
-    a.textContent = d ? `Auto-ticked from connection inventory: ${d.names.slice(0,3).join(', ')}${d.names.length>3?` +${d.names.length-3} more`:''} (${d.why})` : '';
-    cb.closest('label').classList.toggle('is-auto', !!d);
-  });
-  const W = fitWarnings();
-  const box = document.getElementById('fitWarn');
-  box.innerHTML = W.map((x,i)=>`<div class="fitwarn"><span>⚠</span><span>${esc(x.text)}</span>${x.fixLabel?`<button class="btn" data-fitfix="${i}">${esc(x.fixLabel)}</button>`:''}</div>`).join('');
-  box._w = W;
-  return W;
-}
 
 function renderStatic(){
   document.querySelectorAll('[data-meta]').forEach(el=>el.value = S.meta[el.dataset.meta]??'');
   document.querySelectorAll('[data-set]').forEach(el=>el.value = S.settings[el.dataset.set]??'');
-  ['card-meta','card-settings','card-fit','card-rates','card-conns','card-edinc'].forEach(id=>{
+  ['card-meta','card-settings','card-rates','card-conns'].forEach(id=>{
     const c=document.getElementById(id); if(S.collapsed[id]!==undefined) c.classList.toggle('collapsed',!!S.collapsed[id]);
   });
-  renderSections(); renderRates(); renderBands(); renderFit(); renderConns(); renderEdInc(); setMode(S.mode);
+  renderSections(); renderRates(); renderBands(); renderConns(); setMode(S.mode);
 }
 
 /* ============================================================
    RENDER: outputs (cheap, runs on every input)
    ============================================================ */
 function update(){
-  DERIVED = derivedFit();
   const R = compute();
   // per-row calc cells + section totals
   R.svc.forEach(s=>{
@@ -702,7 +610,7 @@ function update(){
   const pmax = Math.max(1, ...R.proj.map(p=>p.withH));
   setText('projTitle', `Annual messages over ${R.proj.length}-year term (incl. non-prod + headroom)`);
   document.getElementById('projBars').innerHTML = R.proj.map(p=>
-    `<div class="vbar" data-tip="<b>Year ${p.year}</b><br>${fmt(p.base)} messages (before headroom)<br>${fmt(p.withH)} with ${n(S.settings.headroomPct)}% headroom">
+    `<div class="vbar" data-tip="<b>Year ${p.year}</b><br>${fmt(p.base)} messages (before headroom)${p.oneTime?`<br>incl. ${fmt(p.oneTime)} one-time initial load`:''}<br>${fmt(p.withH)} with ${n(S.settings.headroomPct)}% headroom">
       <div class="cap">${fmtc(p.withH)}</div><div class="col" style="height:${(p.withH/pmax*82).toFixed(2)}%"></div></div>`).join('');
   document.getElementById('projLabels').innerHTML = R.proj.map(p=>`<div>Year ${p.year}</div>`).join('');
 
@@ -712,15 +620,12 @@ function update(){
     ${rowsHtml || '<tr><td colspan="4" style="color:var(--text-muted)">Add workloads on the left to see the breakdown.</td></tr>'}
     <tr class="tot"><td>Production</td><td class="r">${fmt(R.prod)}</td><td class="r">${fmt(R.prod*12)}</td><td class="r">100%</td></tr>
     <tr><td>Non-prod (${n(S.settings.nonProdPct)}%)</td><td class="r">${fmt(R.nonProd)}</td><td class="r">${fmt(R.nonProd*12)}</td><td></td></tr>
+    ${R.oneTime?`<tr><td>One-time initial load (Year 1)</td><td class="r"></td><td class="r">${fmt(R.oneTime)}</td><td></td></tr>`:''}
     ${R.proj.map(p=>`<tr${p.year===1?' class="tot"':''}><td>Year ${p.year} + headroom</td><td class="r">${fmt(p.withH/12)}</td><td class="r">${fmt(p.withH)}</td><td></td></tr>`).join('')}
     </tbody>`;
 
-  // recommendation
-  const rec = recommend(R);
-  document.getElementById('edBar').innerHTML = EDITIONS.map((e,i)=>`<div class="${i===rec.lvl?'rec':i>rec.lvl?'':'on'}">${esc(e)}</div>`).join('');
-  const FW = refreshFit();
-  const warnLi = FW.map(x=>`<li class="warn">⚠ ${esc(x.text)}</li>`).join('');
-  document.getElementById('edReasons').innerHTML = warnLi + rec.reasons.map(r=>`<li>${esc(r.text)}</li>`).join('');
+  // for the AE: services in scope + volume band
+  const rec = {services:servicesInScope(R), ...volumeBand(R)};
   document.getElementById('svcChips').innerHTML = [...rec.services].map(([name,on])=>`<span class="chip${on?' on':''}">${on?'✓ ':''}${esc(name)}</span>`).join('');
   document.getElementById('bandOut').textContent = rec.band ? `${rec.band.name}: ${fmt(rec.y1)} msgs / yr` : 'No bands defined';
 
@@ -751,10 +656,6 @@ function renderConns(){
   const head = CONN_FIELDS.map(f=>`<th${f.type==='num'?' class="r"':''}>${f.tip?`<span class="tip" title="${esc(f.tip)}">${esc(f.label)}</span>`:esc(f.label)}</th>`).join('')
     + `<th class="r">Prod licences</th><th class="r msgs-h">Test licences</th><th class="del-h"></th>`;
   document.getElementById('connTbl').innerHTML = `<thead><tr>${head}</tr></thead><tbody>${S.conns.map(connRowHtml).join('')}</tbody>`;
-}
-function renderEdInc(){
-  document.getElementById('edIncTbl').innerHTML = `<thead><tr><th>Edition</th><th class="r">Standard connectors · prod</th><th class="r">Standard connectors · test</th><th class="r">Enterprise connectors · prod</th><th class="r">Enterprise connectors · test</th></tr></thead><tbody>` +
-    EDITIONS.map((e,i)=>`<tr><td>${esc(e)}</td>${['sp','st','ep','et'].map(k=>`<td style="width:130px"><input class="in" type="number" min="0" step="1" data-edinc="${i}" data-ek="${k}" value="${esc(S.edInc[i][k])}"></td>`).join('')}</tr>`).join('') + '</tbody>';
 }
 function setMode(m){
   S.mode = m;
@@ -806,19 +707,6 @@ function updateConns(R){
     ${C.years>1?`<tr class="tot"><td>Year ${C.years} (end of term)</td><td class="r">${fmt(e.prod)}</td><td class="r">${fmt(e.test)}</td><td class="r">${fmt(e.prod+e.test)}</td></tr>`:''}
     <tr><td colspan="4" style="color:var(--text-muted)">${fmt(C.exemptCount)} Boomi connector${C.exemptCount===1?'':'s'} (Web Services Server, Event Streams, Data Hub…) use no licence</td></tr></tbody>`;
 
-  // recommendation
-  const fitLvl = recommend(R).lvl;
-  const rec = connRecommend(C, fitLvl);
-  document.getElementById('cEdBar').innerHTML = EDITIONS.map((ed,i)=>`<div class="${i===rec.lvl?'rec':i>rec.lvl?'':'on'}">${esc(ed)}</div>`).join('');
-  const FW = fitWarnings();
-  document.getElementById('cEdReasons').innerHTML = FW.map(x=>`<li class="warn">⚠ ${esc(x.text)}</li>`).join('') + rec.reasons.map(r=>`<li>${esc(r.text)}</li>`).join('');
-  setText('cCovTitle', `${EDITIONS[rec.lvl]} Edition: connection licences included vs required (end of term)`);
-  const covRows = rec.cov.filter(c=>c.req||c.incl);
-  document.getElementById('cCovTbl').innerHTML = `<thead><tr><th><span class="tip" title="Connector licence class (Standard / Enterprise / Small Business / Trading Partner), not the edition">Connector class licence</span></th><th class="r">Required</th><th class="r">Included</th><th class="r">Additional</th></tr></thead><tbody>
-    ${covRows.length ? covRows.map(c=>`<tr><td>${esc(c.c)} connectors · ${c.env}</td><td class="r">${fmt(c.req)}</td><td class="r">${fmt(c.incl)}</td><td class="r"${c.add?' style="font-weight:700;color:var(--brand-2)"':''}>${c.add?'+'+fmt(c.add):'0'}</td></tr>`).join('') : '<tr><td colspan="4" style="color:var(--text-muted)">Add connections on the left.</td></tr>'}
-    <tr class="tot"><td>Additional licences</td><td></td><td></td><td class="r">${fmt(rec.cov.reduce((a,c)=>a+c.add,0))}</td></tr></tbody>`;
-  const services = recommend(R).services;
-  document.getElementById('cSvcChips').innerHTML = [...services].map(([name,on])=>`<span class="chip${on?' on':''}">${on?'✓ ':''}${esc(name)}</span>`).join('');
   return C;
 }
 
@@ -831,8 +719,6 @@ document.addEventListener('input', e=>{
   if(el.dataset.set){ S.settings[el.dataset.set] = el.value; return update(); }
   if(el.dataset.rate){ S.rates[el.dataset.rate] = el.value; return update(); }
   if(el.dataset.band!==undefined){ const b=S.bands[+el.dataset.band]; b[el.dataset.bf] = el.dataset.bf==='upTo' ? (el.value===''?null:el.value) : el.value; return update(); }
-  if(el.dataset.fit){ if(el.disabled) return; S.fit[el.dataset.fit] = el.checked; return update(); }
-  if(el.dataset.edinc!==undefined){ S.edInc[+el.dataset.edinc][el.dataset.ek] = el.value; return update(); }
   if(el.dataset.f){
     const tr = el.closest('tr'); const key = el.closest('table').dataset.sec;
     const row = S[key].find(r=>r.id===tr.dataset.id); if(!row) return;
@@ -862,12 +748,6 @@ document.addEventListener('click', e=>{
     const tr = t.closest('tr'); const key = t.closest('table').dataset.sec;
     S[key] = S[key].filter(r=>r.id!==t.dataset.del); tr.remove(); return update();
   }
-  if(t.dataset.fitfix!==undefined){
-    const x = document.getElementById('fitWarn')._w?.[+t.dataset.fitfix]; if(!x) return;
-    if(x.fit){ S.fit[x.fit] = true; toast('Enterprise connectors ticked'); }
-    if(x.fix){ const r = S.conns.find(c=>c.id===x.fix.row); if(r){ r.cls = x.fix.cls; const sel=document.querySelector(`#connTbl tr[data-id="${r.id}"] select[data-f="cls"]`); if(sel) sel.value=r.cls; toast('Class updated'); } }
-    return update();
-  }
   const mb = t.closest('[data-mode]');
   if(mb){ setMode(mb.dataset.mode); update(); toast(mb.dataset.mode==='connections'?'Connection-based sizing':'Platform-message sizing'); return; }
   if(t.id==='btnAddConn'){
@@ -881,7 +761,6 @@ document.addEventListener('click', e=>{
     if(S.conns.length && !confirm('Replace the connection list with the sample connections?')) return;
     S.conns = CONN_SAMPLE.map(r=>({...defaultsForConn(), ...r, id:uid()})); renderConns(); update(); toast('Sample connections loaded'); return;
   }
-  if(t.id==='btnResetEdInc'){ S.edInc = blankState().edInc; renderEdInc(); update(); toast('Edition inclusions reset'); return; }
   if(t.dataset.delband!==undefined){ S.bands.splice(+t.dataset.delband,1); renderBands(); return update(); }
   if(t.id==='btnAddBand'){ S.bands.push({name:'New band', upTo:null}); renderBands(); return update(); }
 });
@@ -915,6 +794,7 @@ on('btnCsv', ()=>{
   }));
   lines.push([]); lines.push(['Total','Production','','',Math.round(R.prod),Math.round(R.prod*12)]);
   lines.push(['Total',`Non-prod (${n(S.settings.nonProdPct)}%)`,'','',Math.round(R.nonProd),Math.round(R.nonProd*12)]);
+  if(R.oneTime) lines.push(['Total','One-time initial load (Year 1)','','','',Math.round(R.oneTime)]);
   R.proj.forEach(p=>lines.push(['Projection',`Year ${p.year} + ${n(S.settings.headroomPct)}% headroom`,'','',Math.round(p.withH/12),Math.round(p.withH)]));
   const csv = lines.map(l=>l.map(v=>{ v=String(v??''); return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v; }).join(',')).join('\n');
   const name = (S.meta.customer||'estimate').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
@@ -922,14 +802,11 @@ on('btnCsv', ()=>{
 });
 
 function connCsv(){
-  const C = computeConns(), R = compute(), rec = connRecommend(C, recommend(R).lvl);
+  const C = computeConns();
   const lines = [['System / endpoint','Connector','Class','Unique connections','Prod runtimes','Test runtimes','Live in','Prod licences','Test licences']];
   C.rows.forEach(x=>lines.push([x.r.name, CONN_CATALOG[x.r.connector]?.label||x.r.connector, CONN_CLASSES[x.r.cls]?.label||x.r.cls, n(x.r.qty), n(x.r.prodRt), n(x.r.testRt), 'Year '+x.r.phase, x.prod, x.test]));
   lines.push([]);
   C.proj.forEach(p=>lines.push(['Total',`Year ${p.year} (cumulative)`,'','','','','',p.prod,p.test]));
-  lines.push([]); lines.push(['Recommended edition', EDITIONS[rec.lvl]]);
-  lines.push(['Licence','Environment','Required','Included','Additional']);
-  rec.cov.forEach(c=>lines.push([c.c, c.env, c.req, c.incl, c.add]));
   lines.push([]); lines.push(['Estimate only, not an official Boomi document.']);
   const csv = lines.map(l=>l.map(v=>{ v=String(v??''); return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v; }).join(',')).join('\n');
   const name = (S.meta.customer||'estimate').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
@@ -962,11 +839,12 @@ let saveT;
 function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }catch(e){} }, 250); }
 function normalize(s){
   const b = blankState();
-  const out = {...b, ...s, meta:{...b.meta,...(s.meta||{})}, settings:{...b.settings,...(s.settings||{})}, rates:{...b.rates,...(s.rates||{})}, fit:{...(s.fit||{})}, collapsed:{...b.collapsed,...(s.collapsed||{})}};
+  const out = {...b, ...s, meta:{...b.meta,...(s.meta||{})}, settings:{...b.settings,...(s.settings||{})}, rates:{...b.rates,...(s.rates||{})}, collapsed:{...b.collapsed,...(s.collapsed||{})}};
   out.bands = Array.isArray(s.bands)&&s.bands.length ? s.bands : b.bands;
   out.mode = s.mode==='connections' ? 'connections' : 'messages';
   out.conns = (Array.isArray(s.conns) ? s.conns : CONN_SAMPLE).map(r=>({...defaultsForConn(), ...r, id:r.id||uid()}));
-  out.edInc = DEFAULT_ED_INC.map((d,i)=>({sp:d.sp,st:d.st,ep:d.ep,et:d.et, ...((s.edInc||[])[i]||{})}));
+  (s.bdi||[]).forEach(r=>{ if(!r.type){ r.type='manual'; r.bdus = perMonth(n(r.bdus), r.per||'month'); r.logic = 0; } });
+  (s.ai||[]).forEach(r=>{ if(r.convs!==undefined && r.users===undefined){ r.users = perMonth(n(r.convs), r.per||'day')*12/365; r.sessions = 1; r.days = 365; delete r.convs; } });
   SECTIONS.forEach(sec=>{ out[sec.key] = (s[sec.key]||[]).map(r=>({...defaultsFor(sec), ...r, id:r.id||uid()})); });
   return out;
 }
@@ -1005,6 +883,7 @@ const GUIDES = {
       ['Req/resp','Tick it if the target sends a reply (an order number, a status). The reply counts too, so each write becomes 2.'],
       ['Lookups','Extra questions Boomi asks other systems for each document. Each one is a question and an answer, so it counts as 2.'],
       ['Retry %','Share of documents sent again because of errors.'],
+      ['Initial load','Records loaded once at go-live (an initial sync or data migration). They count in Year 1 only, so they don\'t inflate the monthly run rate.'],
     ],
     tips:[
       '<b>Bundling saves the most.</b> A nightly sync of 25,000 products sent 100 per document needs only about 250 documents a run.',
@@ -1080,24 +959,41 @@ const GUIDES = {
     tips:['Count unique golden records, not the source records: 3 systems holding the same customer is still 1 golden record.','The integrations that sync records to and from the hub are modelled under Integration.'],
   },
   bdi:{
-    plain:'Data Integration (formerly Rivery) copies data into a data warehouse or lake. Its usage is measured in <b>BDUs</b> (Boomi Data Units), taken from the data-pipeline sizing. <b>1 BDU = 50 messages.</b>',
-    story:'Loading SAP and Shopify data into Snowflake is expected to use about <b>30 BDUs a month</b>.',
-    flow:[['One BDU of pipeline usage','50']],
-    flowTotal:'50 messages per BDU',
-    fields:[['BDUs · Per','Expected BDU usage from the data-pipeline sizing.']],
-    tips:['If you don\'t know the BDUs yet, leave this section empty and note it as an open item.'],
+    plain:'Data Integration (formerly Rivery) copies data into a data warehouse or lake. Its usage is measured in <b>BDUs</b> (Boomi Data Units). <b>1 BDU = 50 messages.</b> BDUs depend on the pipeline type: API sources by tables and runs, database and file replication by data volume.',
+    story:'Shopify and Salesforce data is pulled into Snowflake through their APIs: <b>8 output tables</b>, refreshed <b>4 times a day</b>.',
+    flow:[['Each table written in each run','0.5 BDU'],['8 tables × 4 runs × 30.4 days','486 BDUs'],['+ 20% for logic and orchestration','584 BDUs']],
+    flowTotal:'BDUs × 50 = messages',
+    fields:[
+      ['Pipeline type','API source, high-frequency API, DB / file replication, log-based CDC, or Known BDUs if a BDI sizing already exists.'],
+      ['Output tables · Runs / day','API sources only. Each table written in each run is 0.5 BDU.'],
+      ['GB / month','High-frequency API, DB / file and CDC. 1 BDU per 100 MB (2 BDU per 100 MB for log-based CDC).'],
+      ['Logic uplift %','Extra for Python steps and workflow orchestration. Boomi\'s calculator uses 20%.'],
+    ],
+    tips:['Rates follow Boomi Help › Data Integration › Pricing FAQs. Large API payloads add 0.5 BDU per extra 50 MB, which isn\'t modelled here.','For a detailed sizing, use the BDI team\'s pipeline sizing and enter the result as Known BDUs.'],
   },
+
   ai:{
     plain:'AI agents answer questions or carry out tasks. <b>Each prompt (one question or turn) sent to an agent counts as 100 messages.</b>',
-    story:'An <b>order-status assistant</b> handles about <b>40 conversations a day</b>, with about <b>3 prompts</b> in each.',
-    flow:[['A customer asks the agent a question','1 prompt = 100'],['A follow-up question in the same chat','1 prompt = 100']],
+    story:'An <b>order-status assistant</b> is used by <b>40 people</b>, each opening <b>1 session a day</b> with about <b>3 prompts</b>, every day of the year.',
+    flow:[['A user asks the agent a question','1 prompt = 100'],['A follow-up question in the same session','1 prompt = 100']],
     flowTotal:'100 messages per prompt',
     fields:[
-      ['Conversations · Per','How many chats or tasks the agent handles.'],
-      ['Prompts / conv.','Average number of questions or turns per chat.'],
+      ['Users','People or systems using the agent.'],
+      ['Sessions / user / day','How many times each user starts a conversation per day.'],
+      ['Prompts / session','Questions or turns per session. 3–5 is typical.'],
+      ['Working days / yr','250 for weekday use, 365 for every day.'],
     ],
-    tips:['If the agent calls Boomi processes as tools, for example to look up an order, those documents are counted under Integration too.'],
+    tips:['If the agent calls Boomi processes as tools, for example to look up an order, those documents are counted under Integration too.','Boomi may also require an AI platform add-on. That is for the AE to confirm.'],
   },
+  cp:{
+    plain:'The <b>API Control Plane</b> governs APIs that run on other gateways (AWS, Azure, Kong…) from Boomi. Boomi\'s One Platform calculator counts <b>30,000 messages a year for each managed API</b>.',
+    story:'The customer wants to govern <b>5 APIs</b> that run on their AWS and Azure gateways from Boomi.',
+    flow:[['Each API managed in the Control Plane','30,000 / yr'],['Spread across 12 months','2,500 / mo']],
+    flowTotal:'2,500 messages per API per month',
+    fields:[['Managed APIs','Number of APIs governed in the Control Plane.']],
+    tips:['Editions include some Control Plane APIs. The tool shows the gross figure and the AE nets off the allowance.','API calls through Boomi\'s own gateway are counted under API Management instead.'],
+  },
+
 };
 
 function guideHtml(key){
@@ -1207,8 +1103,8 @@ function connGuideHtml(){
     <ul class="g-tips">
       <li>List <b>endpoints</b>, not interfaces. Five interfaces into one SAP system is still one SAP connection.</li>
       <li>Count a cloud attachment as one runtime. If the customer runs both a cloud attachment and an on-prem runtime, the same connection deployed to both is 2.</li>
-      <li>Platform services such as API Management, Flow, Event Streams, Data Hub and Agentstudio are licensed separately from connections. Tick them under Platform fit.</li>
+      <li>Platform services such as API Management, Flow, Event Streams, Data Hub and Agentstudio are licensed separately from connections.</li>
     </ul>
-    <p class="g-note">Source: Boomi Help, Platform › Licensing and Integration editions. Edition inclusions are editable under "Edition inclusions". Estimate only, not an official Boomi document.</p>
+    <p class="g-note">Source: Boomi Help, Platform › Licensing and Integration editions. Estimate only, not an official Boomi document.</p>
     <div class="g-actions"><button class="btn primary-btn" data-closeguide>Got it</button></div>`;
 }
