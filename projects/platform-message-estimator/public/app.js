@@ -6,12 +6,12 @@ const STORAGE_KEY = 'boomi-pm-estimator-v1';
 const DEFAULT_RATES = {
   doc:        {label:'Integration document (in or out, incl. response docs)', unit:'document', mode:'per', value:1,  src:'Boomi definition: 1 document = 1 message'},
   edi:        {label:'B2B / EDI document',                                    unit:'document', mode:'per', value:1,  src:'Counted as Integration documents'},
-  api:        {label:'API Management call',                                   unit:'API call', mode:'per', value:1,  src:'PAYG equivalents: 1 API call = 1 message'},
-  flow:       {label:'Flow app launch',                                       unit:'launches', mode:'every', value:100, src:'PAYG equivalents: 100 launches = 1 message'},
-  event:      {label:'Event Streams event (published or consumed)',           unit:'events',   mode:'every', value:100, src:'PAYG equivalents: 100 events = 1 message'},
-  hub:        {label:'Data Hub golden record (per year)',                     unit:'golden record / yr', mode:'per', value:12, src:'PAYG equivalents: 1 golden record = 12 messages'},
-  bdu:        {label:'Data Integration (Rivery) BDU',                         unit:'BDU',      mode:'per', value:50, src:'PAYG equivalents: 1 BDU = 50 messages'},
-  ai:         {label:'AI agent prompt',                                       unit:'prompt',   mode:'per', value:100, src:'PAYG equivalents: 1 AI prompt = 100 messages'},
+  api:        {label:'API Management call',                                   unit:'API call', mode:'per', value:1,  src:'Boomi published equivalent: 1 API call = 1 message'},
+  flow:       {label:'Flow app launch',                                       unit:'launches', mode:'every', value:100, src:'Boomi published equivalent: 100 launches = 1 message'},
+  event:      {label:'Event Streams event (published or consumed)',           unit:'events',   mode:'every', value:100, src:'Boomi published equivalent: 100 events = 1 message'},
+  hub:        {label:'Data Hub golden record (per year)',                     unit:'golden record / yr', mode:'per', value:12, src:'Boomi published equivalent: 1 golden record = 12 messages'},
+  bdu:        {label:'Data Integration (Rivery) BDU',                         unit:'BDU',      mode:'per', value:50, src:'Boomi published equivalent: 1 BDU = 50 messages'},
+  ai:         {label:'AI agent prompt',                                       unit:'prompt',   mode:'per', value:100, src:'Boomi published equivalent: 1 AI prompt = 100 messages'},
 };
 
 const DEFAULT_BANDS = [
@@ -22,7 +22,7 @@ const DEFAULT_BANDS = [
   {name:'Band E (example)', upTo:null},
 ];
 
-const DEFAULT_SETTINGS = {daysPerMonth:30.4, nonProdPct:15, growthPct:20, headroomPct:20, years:3, paygBase:99, paygRate:0.05};
+const DEFAULT_SETTINGS = {daysPerMonth:30.4, nonProdPct:15, growthPct:20, headroomPct:20, years:3};
 
 const EDITIONS = ['Standard','Professional','Professional Plus','Enterprise','Enterprise Plus'];
 
@@ -120,7 +120,7 @@ const SECTIONS = [
     },
     sample:[
       {name:'Order status API (mobile app)', consumers:1, calls:6000, per:'day'},
-      {name:'Partner pricing API', consumers:8, calls:500, per:'day'},
+      {name:'Partner catalogue API', consumers:8, calls:500, per:'day'},
     ]
   },
   {
@@ -252,7 +252,6 @@ function rateMul(key){
 /* ---------- formatting ---------- */
 const NF0 = new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
 const NFc = new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1});
-const CUR = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
 const fmt = v => NF0.format(Math.round(v));
 const fmtc = v => v<10000 ? NF0.format(Math.round(v)) : NFc.format(v);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -440,8 +439,6 @@ function update(){
   document.getElementById('edReasons').innerHTML = rec.reasons.map(r=>`<li>${esc(r.text)}</li>`).join('');
   document.getElementById('svcChips').innerHTML = [...rec.services].map(([name,on])=>`<span class="chip${on?' on':''}">${on?'✓ ':''}${esc(name)}</span>`).join('');
   document.getElementById('bandOut').textContent = rec.band ? `${rec.band.name}: ${fmt(rec.y1)} msgs / yr` : 'No bands defined';
-  const payg = n(S.settings.paygBase) + R.monthly*n(S.settings.paygRate);
-  document.getElementById('paygOut').innerHTML = `${CUR.format(payg)} / month · ${CUR.format(payg*12)} / year <span style="color:var(--text-muted);font-size:12px">(${CUR.format(n(S.settings.paygBase))} + ${fmt(R.monthly)} × $${n(S.settings.paygRate)})</span>`;
 
   // print header
   const m = S.meta;

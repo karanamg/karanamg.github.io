@@ -248,20 +248,15 @@ ul.reasons li{margin:2px 0}
     <div class="card collapsed" id="card-rates">
       <div class="card-h" data-toggle><span class="chev">▾</span><h2>Message conversion rates</h2><span class="badge">Admin · editable</span></div>
       <div class="card-b">
-        <div class="warnbox"><span>ⓘ</span><span><b>Check these against the current Boomi price book or order form before quoting.</b> Defaults follow Boomi's published Platform Message definition (1 document = 1 message, including request/response replies) and the service equivalents on the Pay-As-You-Go page. Contract terms can differ.</span></div>
+        <div class="warnbox"><span>ⓘ</span><span><b>These defaults are for estimation only and are not an official Boomi document.</b> Defaults follow Boomi's published Platform Message definition (1 document = 1 message, including request/response replies) and Boomi's published service equivalents. Confirm them with your Boomi contact for each opportunity.</span></div>
         <div class="tbl-wrap"><table class="rows" id="ratesTbl"></table></div>
         <div class="row-actions" style="margin-top:10px">
           <button class="btn" id="btnResetRates">Reset rates to defaults</button>
         </div>
         <h3 class="sec-title" style="margin-top:18px">Volume bands (for the AE's tier conversation)</h3>
-        <p class="help">The default bands are <b>examples only</b>. Replace them with your price-book tiers. Each band's upper limit is annual messages, including non-prod and headroom.</p>
+        <p class="help">The default bands are <b>examples only</b>. Replace them with the tiers agreed internally. Each band's upper limit is annual messages, including non-prod and headroom.</p>
         <div class="tbl-wrap"><table class="rows" id="bandsTbl"></table></div>
         <div class="row-actions" style="margin-top:10px"><button class="btn" id="btnResetBands">Reset bands</button></div>
-        <h3 class="sec-title" style="margin-top:18px">Pay-As-You-Go reference</h3>
-        <div class="fgrid">
-          <div class="field"><label>Base fee (USD / month)</label><input class="in" type="number" min="0" step="1" data-set="paygBase"></div>
-          <div class="field"><label>Price per message (USD)</label><input class="in" type="number" min="0" step="0.001" data-set="paygRate"></div>
-        </div>
       </div>
     </div>
   </section>
@@ -307,9 +302,7 @@ ul.reasons li{margin:2px 0}
         <div class="chips" id="svcChips" style="margin-top:6px"></div>
         <div style="font-size:12px;color:var(--text-secondary);margin-top:12px">Volume band (Year 1 + headroom)</div>
         <div id="bandOut" style="font-weight:700;margin-top:2px"></div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-top:12px">Pay-As-You-Go list reference</div>
-        <div id="paygOut" style="font-variant-numeric:tabular-nums"></div>
-        <div class="note">This is a sizing aid for the AE conversation, not a quote. Subscription pricing is quote-based and depends on edition, connectors and add-ons.</div>
+        <div class="note">Estimate only, not an official Boomi document. Use it as a sizing aid for the AE conversation.</div>
       </div>
     </div>
   </aside>
